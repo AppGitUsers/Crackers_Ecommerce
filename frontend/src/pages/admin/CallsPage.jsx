@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react'
 import { CallsAPI, CustomersAPI } from '../../api/endpoints'
 
 const STATUS_OPTIONS = [
-  { value: 'not_called', label: 'Not Called Yet', color: 'bg-gray-100 text-gray-600' },
+  { value: 'not_called', label: 'Not Called Yet', color: 'bg-ink-100 text-ink-500' },
   { value: 'no_answer', label: 'Called — No Answer', color: 'bg-yellow-100 text-yellow-700' },
   { value: 'answered', label: 'Called — Answered', color: 'bg-blue-100 text-blue-700' },
   { value: 'interested', label: 'Interested / Proceeding', color: 'bg-purple-100 text-purple-700' },
   { value: 'not_interested', label: 'Not Interested', color: 'bg-orange-100 text-orange-700' },
   { value: 'deal_closed', label: 'Deal Closed — Paid', color: 'bg-green-100 text-green-700' },
-  { value: 'cancelled', label: 'Cancelled', color: 'bg-red-100 text-red-700' },
+  { value: 'cancelled', label: 'Cancelled', color: 'bg-brand-50 text-brand-700' },
 ]
 
 const EMPTY_FORM = { customer: '', notes: '', status: 'not_called', was_called: false, was_answered: false }
@@ -55,14 +55,14 @@ export default function CallsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-extrabold text-brand-800">Calls</h1>
+        <h1 className="text-2xl font-extrabold text-ink-900">Calls</h1>
         <button className="btn-primary" onClick={() => setShowForm(true)}>+ New Call Log</button>
       </div>
 
       <div className="flex gap-2 flex-wrap mb-4">
         <button
           onClick={() => setStatusFilter('')}
-          className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${statusFilter === '' ? 'bg-brand-500 text-white border-brand-500' : 'bg-white border-sandal-300 text-brand-700'}`}
+          className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${statusFilter === '' ? 'bg-brand-500 text-white border-brand-500' : 'bg-white border-sandal-300 text-ink-700'}`}
         >
           All
         </button>
@@ -70,7 +70,7 @@ export default function CallsPage() {
           <button
             key={s.value}
             onClick={() => setStatusFilter(s.value)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${statusFilter === s.value ? 'bg-brand-500 text-white border-brand-500' : 'bg-white border-sandal-300 text-brand-700'}`}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${statusFilter === s.value ? 'bg-brand-500 text-white border-brand-500' : 'bg-white border-sandal-300 text-ink-700'}`}
           >
             {s.label}
           </button>
@@ -78,11 +78,11 @@ export default function CallsPage() {
       </div>
 
       {loading ? (
-        <p className="text-brand-500">Loading…</p>
+        <p className="text-ink-500">Loading…</p>
       ) : (
         <div className="card overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-sandal-100 text-brand-600 text-left">
+            <thead className="bg-sandal-100 text-ink-600 text-left">
               <tr>
                 <th className="px-4 py-3">Customer</th>
                 <th className="px-4 py-3">Order</th>
@@ -96,9 +96,9 @@ export default function CallsPage() {
             <tbody className="divide-y divide-sandal-100">
               {calls.map((call) => (
                 <tr key={call.id}>
-                  <td className="px-4 py-3 font-semibold text-brand-900">
+                  <td className="px-4 py-3 font-semibold text-ink-900">
                     {call.customer_name}
-                    <div className="text-xs text-brand-400 font-normal">{call.customer_phone}</div>
+                    <div className="text-xs text-ink-400 font-normal">{call.customer_phone}</div>
                   </td>
                   <td className="px-4 py-3">{call.order_number || '—'}</td>
                   <td className="px-4 py-3">{call.was_called ? '✅' : '—'}</td>
@@ -112,8 +112,8 @@ export default function CallsPage() {
                       {STATUS_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
                     </select>
                   </td>
-                  <td className="px-4 py-3 text-brand-500 max-w-xs truncate">{call.notes || '—'}</td>
-                  <td className="px-4 py-3 text-brand-400 text-xs">{new Date(call.updated_at).toLocaleString()}</td>
+                  <td className="px-4 py-3 text-ink-500 max-w-xs truncate">{call.notes || '—'}</td>
+                  <td className="px-4 py-3 text-ink-400 text-xs">{new Date(call.updated_at).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -124,22 +124,22 @@ export default function CallsPage() {
       {showForm && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-30 px-4">
           <form onSubmit={handleSubmit} className="card p-6 w-full max-w-md space-y-3">
-            <h2 className="font-bold text-lg text-brand-800">New Call Log</h2>
+            <h2 className="font-bold text-lg text-ink-900">New Call Log</h2>
             <div>
-              <label className="text-sm font-semibold text-brand-700">Customer</label>
+              <label className="text-sm font-semibold text-ink-700">Customer</label>
               <select className="input mt-1" value={form.customer} onChange={(e) => setForm({ ...form, customer: e.target.value })} required>
                 <option value="">Select customer…</option>
                 {customers.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.phone})</option>)}
               </select>
             </div>
             <div>
-              <label className="text-sm font-semibold text-brand-700">Status</label>
+              <label className="text-sm font-semibold text-ink-700">Status</label>
               <select className="input mt-1" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
                 {STATUS_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-sm font-semibold text-brand-700">Notes</label>
+              <label className="text-sm font-semibold text-ink-700">Notes</label>
               <textarea className="input mt-1" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             </div>
             <div className="flex gap-2 justify-end pt-2">

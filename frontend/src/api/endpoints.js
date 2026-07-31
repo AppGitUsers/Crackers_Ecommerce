@@ -69,6 +69,8 @@ export const CallsAPI = {
 
 export const FinanceAPI = {
   summary: (params) => api.get('/finance/summary/', { params }),
+  trend: (months = 6) => api.get('/finance/trend/', { params: { months } }),
+  exportExcel: (params) => api.get('/finance/export/', { params, responseType: 'blob' }),
   list: (params) => api.get('/finance/', { params }),
   create: (data) => api.post('/finance/', data),
   update: (id, data) => api.patch(`/finance/${id}/`, data),

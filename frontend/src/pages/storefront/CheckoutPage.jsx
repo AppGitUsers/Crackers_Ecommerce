@@ -13,7 +13,7 @@ export default function CheckoutPage() {
   if (items.length === 0) {
     return (
       <div className="text-center py-20">
-        <p className="text-brand-600 mb-4">Your cart is empty.</p>
+        <p className="text-ink-600 mb-4">Your cart is empty.</p>
         <Link to="/" className="btn-primary">Browse products</Link>
       </div>
     )
@@ -44,39 +44,39 @@ export default function CheckoutPage() {
 
   return (
     <div className="max-w-lg mx-auto">
-      <h1 className="text-xl font-extrabold text-brand-800 mb-4">Checkout</h1>
+      <h1 className="text-xl font-extrabold text-ink-900 mb-4">Checkout</h1>
 
       <form onSubmit={handleSubmit} className="card p-5 space-y-4">
         <div>
-          <label className="text-sm font-semibold text-brand-700">Full Name *</label>
+          <label className="text-sm font-semibold text-ink-700">Full Name *</label>
           <input className="input mt-1" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
         </div>
         <div>
-          <label className="text-sm font-semibold text-brand-700">Phone Number *</label>
+          <label className="text-sm font-semibold text-ink-700">Phone Number *</label>
           <input className="input mt-1" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required />
-          <p className="text-xs text-brand-400 mt-1">We'll call this number to confirm your order and payment.</p>
+          <p className="text-xs text-ink-400 mt-1">We'll call this number to confirm your order and payment.</p>
         </div>
         <div>
-          <label className="text-sm font-semibold text-brand-700">Delivery Address</label>
+          <label className="text-sm font-semibold text-ink-700">Delivery Address</label>
           <textarea className="input mt-1" rows={3} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-sm font-semibold text-brand-700">City</label>
+            <label className="text-sm font-semibold text-ink-700">City</label>
             <input className="input mt-1" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
           </div>
           <div>
-            <label className="text-sm font-semibold text-brand-700">Pincode</label>
+            <label className="text-sm font-semibold text-ink-700">Pincode</label>
             <input className="input mt-1" value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value })} />
           </div>
         </div>
 
         <div className="border-t border-sandal-200 pt-4 flex items-center justify-between">
-          <span className="font-semibold text-brand-700">Subtotal</span>
-          <span className="text-xl font-extrabold">₹{subtotal.toFixed(2)}</span>
+          <span className="font-semibold text-ink-700">Subtotal</span>
+          <span className="text-xl font-extrabold text-ink-900">₹{subtotal.toFixed(2)}</span>
         </div>
 
-        {error && <p className="text-red-600 text-sm">{error}</p>}
+        {error && <p className="text-brand-600 text-sm font-semibold">{error}</p>}
 
         <button type="submit" disabled={submitting} className="btn-primary w-full py-3">
           {submitting ? 'Placing order…' : 'Place Order'}

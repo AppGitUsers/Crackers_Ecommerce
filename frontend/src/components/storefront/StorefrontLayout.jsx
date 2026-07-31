@@ -15,17 +15,19 @@ export default function StorefrontLayout() {
   }, [])
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white">
       {offers.length > 0 && <OfferBanner offers={offers} />}
 
-      <header className="bg-white border-b border-sandal-200 sticky top-0 z-20 shadow-sm">
+      <header className="bg-white border-b-2 border-brand-500 sticky top-0 z-20 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <span className="text-2xl">🎆</span>
-            <span className="text-xl font-extrabold text-brand-600 tracking-tight">Sivakasi Crackers</span>
+            <span className="text-xl font-extrabold text-ink-900 tracking-tight">
+              Sivakasi <span className="text-brand-600">Crackers</span>
+            </span>
           </Link>
           <nav className="flex items-center gap-4 text-sm font-semibold">
-            <Link to="/my-orders" className="text-brand-700 hover:text-brand-500">My Orders</Link>
+            <Link to="/my-orders" className="text-ink-700 hover:text-brand-600 transition-colors">My Orders</Link>
             <Link to="/cart" className="relative btn-primary flex items-center gap-2">
               Cart
               {totalItems > 0 && (
@@ -42,7 +44,7 @@ export default function StorefrontLayout() {
         <Outlet />
       </main>
 
-      <footer className="bg-brand-900 text-sandal-100 text-sm py-6 mt-10">
+      <footer className="bg-ink-900 text-sandal-200 text-sm py-6 mt-10">
         <div className="max-w-6xl mx-auto px-4">
           © {new Date().getFullYear()} Sivakasi Crackers. Orders confirmed by phone call after checkout.
         </div>

@@ -1,9 +1,11 @@
 export default function StatCard({ label, value, icon, accent = 'brand' }) {
   const accentClasses = {
-    brand: 'bg-brand-100 text-brand-700',
-    green: 'bg-green-100 text-green-700',
-    red: 'bg-red-100 text-red-700',
-    sandal: 'bg-sandal-200 text-brand-800',
+    brand: 'bg-brand-50 text-brand-600',
+    ink: 'bg-ink-100 text-ink-700',
+    green: 'bg-green-50 text-green-700',
+    red: 'bg-brand-50 text-brand-600',
+    gold: 'bg-gold-500/10 text-gold-600',
+    sandal: 'bg-sandal-100 text-ink-700',
   }
   return (
     <div className="card p-4 flex items-center gap-4">
@@ -11,8 +13,8 @@ export default function StatCard({ label, value, icon, accent = 'brand' }) {
         {icon}
       </div>
       <div>
-        <p className="text-xs font-semibold text-brand-400 uppercase tracking-wide">{label}</p>
-        <p className="text-xl font-extrabold text-brand-900">{value}</p>
+        <p className="text-xs font-semibold text-ink-400 uppercase tracking-wide">{label}</p>
+        <p className="text-xl font-extrabold text-ink-900">{value}</p>
       </div>
     </div>
   )

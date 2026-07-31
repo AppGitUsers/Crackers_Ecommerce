@@ -22,8 +22,8 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen flex bg-sandal-50">
-      <aside className="w-60 bg-brand-900 text-sandal-100 flex flex-col shrink-0">
-        <div className="px-5 py-5 border-b border-brand-800">
+      <aside className="w-60 bg-ink-900 text-sandal-200 flex flex-col shrink-0">
+        <div className="px-5 py-5 border-b border-ink-700">
           <p className="font-extrabold text-white text-lg">🎆 Crackers CRM</p>
         </div>
         <nav className="flex-1 py-4">
@@ -33,8 +33,10 @@ export default function AdminLayout() {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-5 py-2.5 text-sm font-semibold transition-colors ${
-                  isActive ? 'bg-brand-500 text-white' : 'text-sandal-200 hover:bg-brand-800'
+                `flex items-center gap-3 px-5 py-2.5 text-sm font-semibold transition-colors border-l-4 ${
+                  isActive
+                    ? 'bg-ink-800 text-white border-brand-500'
+                    : 'text-sandal-200 hover:bg-ink-800 border-transparent'
                 }`
               }
             >
@@ -43,11 +45,11 @@ export default function AdminLayout() {
             </NavLink>
           ))}
         </nav>
-        <div className="p-4 border-t border-brand-800">
-          <p className="text-xs text-sandal-300">Signed in as</p>
+        <div className="p-4 border-t border-ink-700">
+          <p className="text-xs text-ink-400">Signed in as</p>
           <p className="font-semibold text-white text-sm truncate">{user?.full_name || user?.username}</p>
-          <p className="text-xs text-sandal-300 capitalize mb-3">{user?.role}</p>
-          <button onClick={handleLogout} className="w-full text-xs font-semibold bg-brand-800 hover:bg-brand-700 text-white rounded-lg py-2">
+          <p className="text-xs text-ink-400 capitalize mb-3">{user?.role}</p>
+          <button onClick={handleLogout} className="w-full text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white rounded-lg py-2 transition-colors">
             Log Out
           </button>
         </div>

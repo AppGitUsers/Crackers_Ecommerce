@@ -25,23 +25,23 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-sandal-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-ink-900 px-4">
       <div className="card p-8 w-full max-w-sm">
         <div className="text-center mb-6">
           <div className="text-4xl mb-2">🎆</div>
-          <h1 className="text-xl font-extrabold text-brand-800">Sivakasi Crackers</h1>
-          <p className="text-brand-500 text-sm">Admin CRM Login</p>
+          <h1 className="text-xl font-extrabold text-ink-900">Sivakasi Crackers</h1>
+          <p className="text-ink-500 text-sm">Admin CRM Login</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-semibold text-brand-700">Username</label>
+            <label className="text-sm font-semibold text-ink-700">Username</label>
             <input className="input mt-1" value={username} onChange={(e) => setUsername(e.target.value)} autoFocus />
           </div>
           <div>
-            <label className="text-sm font-semibold text-brand-700">Password</label>
+            <label className="text-sm font-semibold text-ink-700">Password</label>
             <input type="password" className="input mt-1" value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+          {error && <p className="text-brand-600 text-sm font-semibold">{error}</p>}
           <button type="submit" disabled={submitting} className="btn-primary w-full py-2.5">
             {submitting ? 'Signing in…' : 'Sign In'}
           </button>

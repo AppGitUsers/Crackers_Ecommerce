@@ -18,7 +18,7 @@ function StatusTracker({ order }) {
   }
 
   if (cancelled) {
-    return <p className="text-red-600 font-semibold text-sm">This order was cancelled.</p>
+    return <p className="text-brand-600 font-semibold text-sm">This order was cancelled.</p>
   }
 
   return (
@@ -30,8 +30,8 @@ function StatusTracker({ order }) {
           <div key={step.key} className="flex items-center gap-3">
             <div className={`w-3 h-3 rounded-full shrink-0 ${done ? 'bg-brand-500' : 'bg-sandal-300'}`} />
             <div className="flex-1 flex items-center justify-between">
-              <span className={`text-sm font-semibold ${done ? 'text-brand-800' : 'text-brand-400'}`}>{step.label}</span>
-              {ts && <span className="text-xs text-brand-400">{ts}</span>}
+              <span className={`text-sm font-semibold ${done ? 'text-ink-900' : 'text-ink-400'}`}>{step.label}</span>
+              {ts && <span className="text-xs text-ink-400">{ts}</span>}
             </div>
           </div>
         )
@@ -46,19 +46,19 @@ function OrderCard({ order }) {
     <div className="card p-4">
       <button className="w-full flex items-center justify-between" onClick={() => setExpanded((e) => !e)}>
         <div className="text-left">
-          <p className="font-bold text-brand-800">{order.order_number}</p>
-          <p className="text-xs text-brand-400">{new Date(order.created_at).toLocaleString()}</p>
+          <p className="font-bold text-ink-900">{order.order_number}</p>
+          <p className="text-xs text-ink-400">{new Date(order.created_at).toLocaleString()}</p>
         </div>
         <div className="text-right">
-          <p className="font-bold">₹{order.total_amount}</p>
-          <span className="badge bg-brand-100 text-brand-700 capitalize">{order.current_status.replace(/_/g, ' ')}</span>
+          <p className="font-bold text-ink-900">₹{order.total_amount}</p>
+          <span className="badge bg-ink-100 text-ink-700 capitalize">{order.current_status.replace(/_/g, ' ')}</span>
         </div>
       </button>
 
       {expanded && (
         <div className="mt-4 border-t border-sandal-200 pt-4">
-          <p className="text-sm font-semibold text-brand-700 mb-2">Items</p>
-          <ul className="text-sm text-brand-600 space-y-1 mb-4">
+          <p className="text-sm font-semibold text-ink-700 mb-2">Items</p>
+          <ul className="text-sm text-ink-600 space-y-1 mb-4">
             {order.items.map((item) => (
               <li key={item.id} className="flex justify-between">
                 <span>{item.quantity} × {item.product_name}{item.is_free_item && ' (Free)'}</span>
@@ -66,9 +66,9 @@ function OrderCard({ order }) {
               </li>
             ))}
           </ul>
-          <p className="text-sm font-semibold text-brand-700 mb-1">Order Status</p>
+          <p className="text-sm font-semibold text-ink-700 mb-1">Order Status</p>
           <StatusTracker order={order} />
-          <p className="text-sm font-semibold text-brand-700 mt-4">
+          <p className="text-sm font-semibold text-ink-700 mt-4">
             Payment Status: <span className="font-normal capitalize">{order.payment_status}</span>
           </p>
         </div>
@@ -96,7 +96,7 @@ export default function MyOrdersPage() {
 
   return (
     <div className="max-w-lg mx-auto">
-      <h1 className="text-xl font-extrabold text-brand-800 mb-4">My Orders</h1>
+      <h1 className="text-xl font-extrabold text-ink-900 mb-4">My Orders</h1>
       <form onSubmit={handleLookup} className="flex gap-2 mb-6">
         <input
           className="input"
@@ -110,7 +110,7 @@ export default function MyOrdersPage() {
       {orders !== null && (
         <div className="space-y-3">
           {orders.length === 0 ? (
-            <p className="text-brand-500 text-center py-10">No orders found for this number.</p>
+            <p className="text-ink-500 text-center py-10">No orders found for this number.</p>
           ) : (
             orders.map((order) => <OrderCard key={order.id} order={order} />)
           )}
