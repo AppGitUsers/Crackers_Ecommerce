@@ -123,7 +123,7 @@ export default function OffersPage() {
       </div>
 
       {loading ? <PageLoader /> : (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {offers.map((offer) => (
             <div key={offer.id} className="card overflow-hidden">
               <div className="aspect-[3/1] bg-sandal-100 flex items-center justify-center overflow-hidden">
@@ -194,7 +194,7 @@ export default function OffersPage() {
 
           {form.offer_type === 'buy_x_get_y' && (
             <div className="border border-sandal-200 rounded-lg p-3 space-y-2">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="label">Buy Qty</label>
                   <input type="number" className="input" value={form.buy_x_get_y.buy_quantity}

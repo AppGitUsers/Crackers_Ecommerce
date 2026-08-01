@@ -82,10 +82,10 @@ body {
 
 /* Table */
 .table-container {
-  @apply card overflow-hidden;
+  @apply card overflow-x-auto;
 }
 .table {
-  @apply w-full text-sm;
+  @apply w-full text-sm min-w-[640px];
 }
 .table thead {
   @apply bg-sandal-100 text-ink-600 text-left;

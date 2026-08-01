@@ -154,7 +154,7 @@ export default function FinancePage() {
     <div>
       <div className="page-header">
         <h1 className="page-title">Finance</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1 card px-2 py-1">
             <button className="w-7 h-7 flex items-center justify-center text-ink-600 hover:bg-sandal-100 rounded" onClick={() => shiftMonth(-1)}>
               <ChevronLeft size={16} />
@@ -179,7 +179,7 @@ export default function FinancePage() {
       </div>
 
       {summary && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <StatCard label="Income" value={`₹${Number(summary.income).toLocaleString('en-IN')}`} icon={TrendingUp} accent="green" />
           <StatCard label="Expense" value={`₹${Number(summary.expense).toLocaleString('en-IN')}`} icon={TrendingDown} accent="brand" />
           <StatCard label="Savings" value={`₹${Number(summary.savings).toLocaleString('en-IN')}`} icon={PiggyBank} accent="ink" />
@@ -207,7 +207,25 @@ export default function FinancePage() {
         <CategoryDonut title="Expense Breakdown" rows={expenseRows} emptyLabel="No expense recorded this month." />
       </div>
 
-      <div className="table-container">
+      {/* Phone/tablet: card grid, no horizontal scrolling */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:hidden">
+        {transactions.map((t) => (
+          <div key={t.id} className="card p-4">
+            <div className="flex items-center justify-between gap-2">
+              <span className={`badge capitalize ${t.transaction_type === 'income' ? 'badge-green' : 'badge-brand'}`}>
+                {t.transaction_type}
+              </span>
+              <p className="text-xs text-ink-400">{t.date}</p>
+            </div>
+            <p className="font-semibold text-ink-900 capitalize mt-2">{t.category.replace(/_/g, ' ')}</p>
+            <p className="text-sm text-ink-500">{t.description || '—'}</p>
+            <p className="text-right font-bold text-ink-900 mt-2">₹{t.amount}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Laptop and up: table */}
+      <div className="table-container hidden lg:block">
         <table className="table">
           <thead>
             <tr>
@@ -248,7 +266,7 @@ export default function FinancePage() {
         }
       >
         <form id="finance-transaction-form" onSubmit={handleSubmit} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="label">Type</label>
               <select className="input" value={form.transaction_type} onChange={(e) => setForm({ ...form, transaction_type: e.target.value })}>

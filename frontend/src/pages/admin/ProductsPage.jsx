@@ -100,49 +100,85 @@ export default function ProductsPage() {
       {loading ? (
         <PageLoader />
       ) : (
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Category</th>
-                <th>Price</th>
-                <th>Stock</th>
-                <th>Available</th>
-                <th className="text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((p) => (
-                <tr key={p.id}>
-                  <td className="font-semibold text-ink-900">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-sandal-100 rounded overflow-hidden flex items-center justify-center shrink-0">
-                        {p.primary_image ? <img src={p.primary_image} className="w-full h-full object-cover" /> : <ImageOff size={14} className="text-ink-300" />}
-                      </div>
-                      {p.name}
-                    </div>
-                  </td>
-                  <td>{p.category_name}</td>
-                  <td>₹{p.price}</td>
-                  <td>{p.stock_quantity}</td>
-                  <td>
-                    <button
-                      className={`badge ${p.is_available ? 'badge-green' : 'badge-ink'}`}
-                      onClick={() => toggleAvailability(p)}
-                    >
-                      {p.is_available ? 'Available' : 'Hidden'}
-                    </button>
-                  </td>
-                  <td className="text-right space-x-3">
-                    <button className="text-brand-600 font-semibold hover:text-brand-700" onClick={() => openEdit(p.id)}>Edit</button>
-                    <button className="text-brand-600 font-semibold hover:text-brand-700" onClick={() => setDeleteTarget(p)}>Delete</button>
-                  </td>
+        <>
+          {/* Phone/tablet: card grid, no horizontal scrolling */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:hidden">
+            {products.map((p) => (
+              <div key={p.id} className="card p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-sandal-100 rounded-lg overflow-hidden flex items-center justify-center shrink-0">
+                    {p.primary_image ? <img src={p.primary_image} className="w-full h-full object-cover" /> : <ImageOff size={18} className="text-ink-300" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-ink-900 truncate">{p.name}</p>
+                    <p className="text-xs text-ink-400">{p.category_name}</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between mt-3 text-sm">
+                  <span className="font-semibold text-ink-900">₹{p.price}</span>
+                  <span className="text-ink-500">Stock: {p.stock_quantity}</span>
+                </div>
+                <div className="flex items-center justify-between mt-3">
+                  <button
+                    className={`badge ${p.is_available ? 'badge-green' : 'badge-ink'}`}
+                    onClick={() => toggleAvailability(p)}
+                  >
+                    {p.is_available ? 'Available' : 'Hidden'}
+                  </button>
+                  <div className="space-x-3">
+                    <button className="text-brand-600 font-semibold text-sm hover:text-brand-700" onClick={() => openEdit(p.id)}>Edit</button>
+                    <button className="text-brand-600 font-semibold text-sm hover:text-brand-700" onClick={() => setDeleteTarget(p)}>Delete</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Laptop and up: table */}
+          <div className="table-container hidden lg:block">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Available</th>
+                  <th className="text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {products.map((p) => (
+                  <tr key={p.id}>
+                    <td className="font-semibold text-ink-900">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-sandal-100 rounded overflow-hidden flex items-center justify-center shrink-0">
+                          {p.primary_image ? <img src={p.primary_image} className="w-full h-full object-cover" /> : <ImageOff size={14} className="text-ink-300" />}
+                        </div>
+                        {p.name}
+                      </div>
+                    </td>
+                    <td>{p.category_name}</td>
+                    <td>₹{p.price}</td>
+                    <td>{p.stock_quantity}</td>
+                    <td>
+                      <button
+                        className={`badge ${p.is_available ? 'badge-green' : 'badge-ink'}`}
+                        onClick={() => toggleAvailability(p)}
+                      >
+                        {p.is_available ? 'Available' : 'Hidden'}
+                      </button>
+                    </td>
+                    <td className="text-right space-x-3">
+                      <button className="text-brand-600 font-semibold hover:text-brand-700" onClick={() => openEdit(p.id)}>Edit</button>
+                      <button className="text-brand-600 font-semibold hover:text-brand-700" onClick={() => setDeleteTarget(p)}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       <Modal
@@ -172,7 +208,7 @@ export default function ProductsPage() {
             <label className="label">Description</label>
             <textarea className="input" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="label">Price (₹)</label>
               <input type="number" step="0.01" className="input" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required />

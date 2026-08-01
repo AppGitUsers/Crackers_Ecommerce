@@ -70,37 +70,59 @@ export default function CategoriesPage() {
       {loading ? (
         <PageLoader />
       ) : (
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Products</th>
-                <th>Order</th>
-                <th>Status</th>
-                <th className="text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {categories.map((cat) => (
-                <tr key={cat.id}>
-                  <td className="font-semibold text-ink-900">{cat.name}</td>
-                  <td>{cat.product_count}</td>
-                  <td>{cat.display_order}</td>
-                  <td>
-                    <span className={`badge ${cat.is_active ? 'badge-green' : 'badge-ink'}`}>
-                      {cat.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="text-right space-x-3">
-                    <button className="text-brand-600 font-semibold hover:text-brand-700" onClick={() => openEdit(cat)}>Edit</button>
-                    <button className="text-brand-600 font-semibold hover:text-brand-700" onClick={() => setDeleteTarget(cat)}>Delete</button>
-                  </td>
+        <>
+          {/* Phone/tablet: card grid, no horizontal scrolling */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:hidden">
+            {categories.map((cat) => (
+              <div key={cat.id} className="card p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-semibold text-ink-900">{cat.name}</p>
+                  <span className={`badge ${cat.is_active ? 'badge-green' : 'badge-ink'}`}>
+                    {cat.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+                <p className="text-xs text-ink-400 mt-1">{cat.product_count} product(s) · Order {cat.display_order}</p>
+                <div className="space-x-3 mt-3">
+                  <button className="text-brand-600 font-semibold text-sm hover:text-brand-700" onClick={() => openEdit(cat)}>Edit</button>
+                  <button className="text-brand-600 font-semibold text-sm hover:text-brand-700" onClick={() => setDeleteTarget(cat)}>Delete</button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Laptop and up: table */}
+          <div className="table-container hidden lg:block">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Products</th>
+                  <th>Order</th>
+                  <th>Status</th>
+                  <th className="text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {categories.map((cat) => (
+                  <tr key={cat.id}>
+                    <td className="font-semibold text-ink-900">{cat.name}</td>
+                    <td>{cat.product_count}</td>
+                    <td>{cat.display_order}</td>
+                    <td>
+                      <span className={`badge ${cat.is_active ? 'badge-green' : 'badge-ink'}`}>
+                        {cat.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="text-right space-x-3">
+                      <button className="text-brand-600 font-semibold hover:text-brand-700" onClick={() => openEdit(cat)}>Edit</button>
+                      <button className="text-brand-600 font-semibold hover:text-brand-700" onClick={() => setDeleteTarget(cat)}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       <Modal
@@ -127,7 +149,7 @@ export default function CategoriesPage() {
             <label className="label">Image</label>
             <input type="file" accept="image/*" className="input" onChange={(e) => setImageFile(e.target.files[0])} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="label">Display Order</label>
               <input type="number" className="input" value={form.display_order} onChange={(e) => setForm({ ...form, display_order: e.target.value })} />

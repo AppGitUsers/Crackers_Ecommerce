@@ -43,7 +43,7 @@ export default function OrdersPage() {
         <h1 className="page-title">Orders</h1>
       </div>
 
-      <div className="flex gap-3 mb-4">
+      <div className="flex flex-wrap gap-3 mb-4">
         <div className="relative max-w-xs w-full">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
           <input
@@ -68,42 +68,68 @@ export default function OrdersPage() {
       {loading ? (
         <PageLoader />
       ) : (
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Order #</th>
-                <th>Customer</th>
-                <th>Items</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Payment</th>
-                <th>Placed</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((o) => (
-                <tr
-                  key={o.id}
-                  className="hover:bg-sandal-50 cursor-pointer"
-                  onClick={() => navigate(`/admin/orders/${o.id}`)}
-                >
-                  <td className="font-semibold text-ink-900">{o.order_number}</td>
-                  <td>{o.customer_name}<div className="text-xs text-ink-400">{o.customer_phone}</div></td>
-                  <td>{o.item_count}</td>
-                  <td className="font-semibold text-ink-900">₹{o.total_amount}</td>
-                  <td>
-                    <span className={`badge capitalize ${STATUS_COLORS[o.current_status]}`}>{o.current_status.replace(/_/g, ' ')}</span>
-                  </td>
-                  <td>
-                    <span className={`badge capitalize ${PAYMENT_COLORS[o.payment_status]}`}>{o.payment_status}</span>
-                  </td>
-                  <td className="text-ink-400 text-xs">{new Date(o.created_at).toLocaleString()}</td>
+        <>
+          {/* Phone/tablet: card grid, no horizontal scrolling */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:hidden">
+            {orders.map((o) => (
+              <div
+                key={o.id}
+                className="card p-4 cursor-pointer hover:bg-sandal-50 transition-colors"
+                onClick={() => navigate(`/admin/orders/${o.id}`)}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-semibold text-ink-900">{o.order_number}</p>
+                  <p className="font-semibold text-ink-900 shrink-0">₹{o.total_amount}</p>
+                </div>
+                <p className="text-sm text-ink-700 mt-1">{o.customer_name}</p>
+                <p className="text-xs text-ink-400">{o.customer_phone} · {o.item_count} item(s)</p>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <span className={`badge capitalize ${STATUS_COLORS[o.current_status]}`}>{o.current_status.replace(/_/g, ' ')}</span>
+                  <span className={`badge capitalize ${PAYMENT_COLORS[o.payment_status]}`}>{o.payment_status}</span>
+                </div>
+                <p className="text-ink-400 text-xs mt-2">{new Date(o.created_at).toLocaleString()}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Laptop and up: table */}
+          <div className="table-container hidden lg:block">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Order #</th>
+                  <th>Customer</th>
+                  <th>Items</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Payment</th>
+                  <th>Placed</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {orders.map((o) => (
+                  <tr
+                    key={o.id}
+                    className="hover:bg-sandal-50 cursor-pointer"
+                    onClick={() => navigate(`/admin/orders/${o.id}`)}
+                  >
+                    <td className="font-semibold text-ink-900">{o.order_number}</td>
+                    <td>{o.customer_name}<div className="text-xs text-ink-400">{o.customer_phone}</div></td>
+                    <td>{o.item_count}</td>
+                    <td className="font-semibold text-ink-900">₹{o.total_amount}</td>
+                    <td>
+                      <span className={`badge capitalize ${STATUS_COLORS[o.current_status]}`}>{o.current_status.replace(/_/g, ' ')}</span>
+                    </td>
+                    <td>
+                      <span className={`badge capitalize ${PAYMENT_COLORS[o.payment_status]}`}>{o.payment_status}</span>
+                    </td>
+                    <td className="text-ink-400 text-xs">{new Date(o.created_at).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   )

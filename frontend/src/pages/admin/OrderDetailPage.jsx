@@ -38,34 +38,36 @@ export default function OrderDetailPage() {
         <ArrowLeft size={15} />
         Back to Orders
       </Link>
-      <div className="flex items-center justify-between mt-2 mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-2 mt-2 mb-6">
         <h1 className="page-title">{order.order_number}</h1>
         <span className="text-ink-400 text-sm">{new Date(order.created_at).toLocaleString()}</span>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="card p-4 col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <div className="card p-4 lg:col-span-2">
           <h2 className="section-title">Items</h2>
-          <table className="w-full text-sm">
-            <thead className="text-ink-500 text-left border-b border-sandal-200">
-              <tr>
-                <th className="pb-2">Product</th>
-                <th className="pb-2">Qty</th>
-                <th className="pb-2">Price</th>
-                <th className="pb-2 text-right">Subtotal</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-sandal-100">
-              {order.items.map((item) => (
-                <tr key={item.id}>
-                  <td className="py-2 text-ink-900">{item.product_name}{item.is_free_item && <span className="badge bg-green-100 text-green-700 ml-2">Free</span>}</td>
-                  <td className="py-2">{item.quantity}</td>
-                  <td className="py-2">₹{item.unit_price}</td>
-                  <td className="py-2 text-right">₹{item.subtotal}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[420px]">
+              <thead className="text-ink-500 text-left border-b border-sandal-200">
+                <tr>
+                  <th className="pb-2">Product</th>
+                  <th className="pb-2">Qty</th>
+                  <th className="pb-2">Price</th>
+                  <th className="pb-2 text-right">Subtotal</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-sandal-100">
+                {order.items.map((item) => (
+                  <tr key={item.id}>
+                    <td className="py-2 text-ink-900">{item.product_name}{item.is_free_item && <span className="badge bg-green-100 text-green-700 ml-2">Free</span>}</td>
+                    <td className="py-2">{item.quantity}</td>
+                    <td className="py-2">₹{item.unit_price}</td>
+                    <td className="py-2 text-right">₹{item.subtotal}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <div className="border-t border-sandal-200 mt-3 pt-3 space-y-1 text-sm">
             <div className="flex justify-between"><span className="text-ink-500">Subtotal</span><span className="text-ink-900">₹{order.subtotal_amount}</span></div>
             {Number(order.discount_amount) > 0 && (
@@ -89,7 +91,7 @@ export default function OrderDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <div className="card p-4">
           <h2 className="section-title">Order Status</h2>
           <div className="flex flex-wrap gap-2">

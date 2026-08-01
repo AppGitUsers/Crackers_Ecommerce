@@ -91,45 +91,76 @@ export default function CallsPage() {
       {loading ? (
         <PageLoader />
       ) : (
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Customer</th>
-                <th>Order</th>
-                <th>Called?</th>
-                <th>Answered?</th>
-                <th>Status</th>
-                <th>Notes</th>
-                <th>Updated</th>
-              </tr>
-            </thead>
-            <tbody>
-              {calls.map((call) => (
-                <tr key={call.id}>
-                  <td className="font-semibold text-ink-900">
-                    {call.customer_name}
-                    <div className="text-xs text-ink-400 font-normal">{call.customer_phone}</div>
-                  </td>
-                  <td>{call.order_number || '—'}</td>
-                  <td><BoolIndicator value={call.was_called} /></td>
-                  <td><BoolIndicator value={call.was_answered} /></td>
-                  <td>
-                    <select
-                      className={`badge border-0 capitalize ${statusMeta(call.status).color}`}
-                      value={call.status}
-                      onChange={(e) => updateStatus(call, e.target.value)}
-                    >
-                      {STATUS_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-                    </select>
-                  </td>
-                  <td className="text-ink-500 max-w-xs truncate">{call.notes || '—'}</td>
-                  <td className="text-ink-400 text-xs">{new Date(call.updated_at).toLocaleString()}</td>
+        <>
+          {/* Phone/tablet: card grid, no horizontal scrolling */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:hidden">
+            {calls.map((call) => (
+              <div key={call.id} className="card p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-ink-900 truncate">{call.customer_name}</p>
+                    <p className="text-xs text-ink-400">{call.customer_phone}</p>
+                  </div>
+                  <p className="text-xs text-ink-400 shrink-0">{call.order_number || '—'}</p>
+                </div>
+                <div className="flex items-center gap-4 mt-2 text-xs text-ink-500">
+                  <span className="flex items-center gap-1">Called <BoolIndicator value={call.was_called} /></span>
+                  <span className="flex items-center gap-1">Answered <BoolIndicator value={call.was_answered} /></span>
+                </div>
+                <select
+                  className={`badge border-0 capitalize mt-3 ${statusMeta(call.status).color}`}
+                  value={call.status}
+                  onChange={(e) => updateStatus(call, e.target.value)}
+                >
+                  {STATUS_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                </select>
+                {call.notes && <p className="text-sm text-ink-600 mt-2">{call.notes}</p>}
+                <p className="text-ink-400 text-xs mt-2">{new Date(call.updated_at).toLocaleString()}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Laptop and up: table */}
+          <div className="table-container hidden lg:block">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Order</th>
+                  <th>Called?</th>
+                  <th>Answered?</th>
+                  <th>Status</th>
+                  <th>Notes</th>
+                  <th>Updated</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {calls.map((call) => (
+                  <tr key={call.id}>
+                    <td className="font-semibold text-ink-900">
+                      {call.customer_name}
+                      <div className="text-xs text-ink-400 font-normal">{call.customer_phone}</div>
+                    </td>
+                    <td>{call.order_number || '—'}</td>
+                    <td><BoolIndicator value={call.was_called} /></td>
+                    <td><BoolIndicator value={call.was_answered} /></td>
+                    <td>
+                      <select
+                        className={`badge border-0 capitalize ${statusMeta(call.status).color}`}
+                        value={call.status}
+                        onChange={(e) => updateStatus(call, e.target.value)}
+                      >
+                        {STATUS_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                      </select>
+                    </td>
+                    <td className="text-ink-500 max-w-xs truncate">{call.notes || '—'}</td>
+                    <td className="text-ink-400 text-xs">{new Date(call.updated_at).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       <Modal

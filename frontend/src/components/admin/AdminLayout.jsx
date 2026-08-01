@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard, FolderTree, PartyPopper, Package, Tag, Wallet, Phone, LogOut,
+  LayoutDashboard, FolderTree, PartyPopper, Package, Tag, Wallet, Phone, LogOut, Menu, X,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { ConfirmDialog } from './ui.jsx'
@@ -20,6 +20,7 @@ export default function AdminLayout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [confirmLogout, setConfirmLogout] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   function handleLogout() {
     logout()
@@ -28,19 +29,42 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen flex bg-sandal-50">
-      <aside className="w-60 bg-ink-900 text-sandal-200 flex flex-col shrink-0">
-        <div className="px-5 py-5 border-b border-ink-700 flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center shrink-0">
-            <PartyPopper size={18} className="text-gold-400" />
+      {/* Mobile/tablet backdrop, shown while the drawer is open */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 w-64 bg-ink-900 text-sandal-200 flex flex-col shrink-0
+          transition-transform duration-200 ease-in-out
+          lg:sticky lg:top-0 lg:h-screen lg:translate-x-0
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      >
+        <div className="px-5 py-5 border-b border-ink-700 flex items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center shrink-0">
+              <PartyPopper size={18} className="text-gold-400" />
+            </div>
+            <p className="font-extrabold text-white text-base leading-tight truncate">Crackers CRM</p>
           </div>
-          <p className="font-extrabold text-white text-base leading-tight">Crackers CRM</p>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden p-1.5 rounded-lg text-ink-400 hover:text-white hover:bg-ink-800 transition-colors shrink-0"
+            aria-label="Close menu"
+          >
+            <X size={18} />
+          </button>
         </div>
-        <nav className="flex-1 py-4">
+        <nav className="flex-1 py-4 overflow-y-auto">
           {NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.end}
+              onClick={() => setSidebarOpen(false)}
               className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
             >
               <item.icon size={17} className="shrink-0" />
@@ -63,7 +87,19 @@ export default function AdminLayout() {
       </aside>
 
       <div className="flex-1 min-w-0">
-        <main className="p-6">
+        {/* Mobile/tablet top bar — gives access to the drawer once it's closed */}
+        <header className="lg:hidden sticky top-0 z-20 bg-white border-b border-sandal-200 px-4 py-3 flex items-center gap-3">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-1.5 rounded-lg text-ink-600 hover:bg-sandal-100 transition-colors"
+            aria-label="Open menu"
+          >
+            <Menu size={20} />
+          </button>
+          <p className="font-bold text-ink-900 text-sm truncate">Crackers CRM</p>
+        </header>
+
+        <main className="p-4 sm:p-6">
           <Outlet />
         </main>
       </div>
