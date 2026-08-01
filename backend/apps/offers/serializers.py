@@ -21,7 +21,7 @@ class OfferSerializer(serializers.ModelSerializer):
     class Meta:
         model = Offer
         fields = [
-            "id", "name", "offer_type", "description", "is_active",
+            "id", "name", "offer_type", "description", "banner_image", "is_active",
             "start_date", "end_date", "priority", "buy_x_get_y", "amount_discount", "created_at",
         ]
         read_only_fields = ["id", "created_at"]

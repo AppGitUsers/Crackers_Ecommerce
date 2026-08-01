@@ -12,6 +12,7 @@ export default function OffersPage() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY_OFFER)
 
   function load() {
@@ -25,8 +26,44 @@ export default function OffersPage() {
   }, [])
 
   function openCreate() {
+    setEditing(null)
     setForm(EMPTY_OFFER)
     setShowForm(true)
+  }
+
+  function openEdit(offer) {
+    setEditing(offer)
+    setForm({
+      name: offer.name,
+      offer_type: offer.offer_type,
+      description: offer.description,
+      is_active: offer.is_active,
+      priority: offer.priority,
+      buy_x_get_y: offer.buy_x_get_y
+        ? {
+            buy_quantity: offer.buy_x_get_y.buy_quantity,
+            get_quantity: offer.buy_x_get_y.get_quantity,
+            buy_products: offer.buy_x_get_y.buy_products,
+            free_products: offer.buy_x_get_y.free_products,
+          }
+        : EMPTY_OFFER.buy_x_get_y,
+      amount_discount: offer.amount_discount
+        ? {
+            min_purchase_amount: offer.amount_discount.min_purchase_amount,
+            discount_type: offer.amount_discount.discount_type,
+            discount_value: offer.amount_discount.discount_value,
+            applicable_products: offer.amount_discount.applicable_products,
+          }
+        : EMPTY_OFFER.amount_discount,
+    })
+    setShowForm(true)
+  }
+
+  async function refreshEditing(id) {
+    const { data } = await OffersAPI.list()
+    const list = data.results || data
+    setOffers(list)
+    setEditing(list.find((o) => o.id === id) || null)
   }
 
   async function handleSubmit(e) {
@@ -38,9 +75,24 @@ export default function OffersPage() {
     if (form.offer_type === 'buy_x_get_y') payload.buy_x_get_y = form.buy_x_get_y
     if (form.offer_type === 'amount_discount') payload.amount_discount = form.amount_discount
 
-    await OffersAPI.create(payload)
+    if (editing) {
+      await OffersAPI.update(editing.id, payload)
+      load()
+    } else {
+      const { data } = await OffersAPI.create(payload)
+      load()
+      setEditing(data)
+      return // keep the form open so a banner image can be attached
+    }
     setShowForm(false)
-    load()
+  }
+
+  async function handleImageUpload(e) {
+    if (!editing) return
+    const file = e.target.files[0]
+    if (!file) return
+    await OffersAPI.uploadBannerImage(editing.id, file)
+    refreshEditing(editing.id)
   }
 
   async function toggleActive(offer) {
@@ -68,32 +120,44 @@ export default function OffersPage() {
       {loading ? <p className="text-ink-500">Loading…</p> : (
         <div className="grid grid-cols-2 gap-4">
           {offers.map((offer) => (
-            <div key={offer.id} className="card p-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-bold text-ink-900">{offer.name}</h3>
-                  <span className="badge bg-sandal-100 text-ink-700 capitalize">{offer.offer_type.replace(/_/g, ' ')}</span>
-                </div>
-                <button
-                  onClick={() => toggleActive(offer)}
-                  className={`badge ${offer.is_active ? 'bg-green-100 text-green-700' : 'bg-ink-100 text-ink-500'}`}
-                >
-                  {offer.is_active ? 'Active' : 'Inactive'}
-                </button>
+            <div key={offer.id} className="card overflow-hidden">
+              <div className="aspect-[3/1] bg-sandal-100 flex items-center justify-center overflow-hidden">
+                {offer.banner_image ? (
+                  <img src={offer.banner_image} alt={offer.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-3xl text-ink-300">🎆</span>
+                )}
               </div>
-              {offer.offer_type === 'buy_x_get_y' && offer.buy_x_get_y && (
-                <p className="text-sm text-ink-600 mt-2">
-                  Buy {offer.buy_x_get_y.buy_quantity} get {offer.buy_x_get_y.get_quantity} free
-                  ({offer.buy_x_get_y.buy_products.length} eligible product(s))
-                </p>
-              )}
-              {offer.offer_type === 'amount_discount' && offer.amount_discount && (
-                <p className="text-sm text-ink-600 mt-2">
-                  Spend ₹{offer.amount_discount.min_purchase_amount} → ₹{offer.amount_discount.discount_value}{' '}
-                  {offer.amount_discount.discount_type === 'flat_discount' ? 'off' : 'worth free'}
-                </p>
-              )}
-              <button className="text-brand-600 hover:text-brand-700 text-sm font-semibold mt-3" onClick={() => handleDelete(offer.id)}>Delete</button>
+              <div className="p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="font-bold text-ink-900">{offer.name}</h3>
+                    <span className="badge bg-sandal-100 text-ink-700 capitalize">{offer.offer_type.replace(/_/g, ' ')}</span>
+                  </div>
+                  <button
+                    onClick={() => toggleActive(offer)}
+                    className={`badge ${offer.is_active ? 'bg-green-100 text-green-700' : 'bg-ink-100 text-ink-500'}`}
+                  >
+                    {offer.is_active ? 'Active' : 'Inactive'}
+                  </button>
+                </div>
+                {offer.offer_type === 'buy_x_get_y' && offer.buy_x_get_y && (
+                  <p className="text-sm text-ink-600 mt-2">
+                    Buy {offer.buy_x_get_y.buy_quantity} get {offer.buy_x_get_y.get_quantity} free
+                    ({offer.buy_x_get_y.buy_products.length} eligible product(s))
+                  </p>
+                )}
+                {offer.offer_type === 'amount_discount' && offer.amount_discount && (
+                  <p className="text-sm text-ink-600 mt-2">
+                    Spend ₹{offer.amount_discount.min_purchase_amount} → ₹{offer.amount_discount.discount_value}{' '}
+                    {offer.amount_discount.discount_type === 'flat_discount' ? 'off' : 'worth free'}
+                  </p>
+                )}
+                <div className="flex gap-3 mt-3">
+                  <button className="text-brand-600 hover:text-brand-700 text-sm font-semibold" onClick={() => openEdit(offer)}>Edit</button>
+                  <button className="text-brand-600 hover:text-brand-700 text-sm font-semibold" onClick={() => handleDelete(offer.id)}>Delete</button>
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -102,7 +166,7 @@ export default function OffersPage() {
       {showForm && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-30 px-4 py-8 overflow-y-auto">
           <form onSubmit={handleSubmit} className="card p-6 w-full max-w-lg space-y-3">
-            <h2 className="font-bold text-lg text-ink-900">New Offer</h2>
+            <h2 className="font-bold text-lg text-ink-900">{editing ? 'Edit Offer' : 'New Offer'}</h2>
             <div>
               <label className="text-sm font-semibold text-ink-700">Name (shown in banner)</label>
               <input className="input mt-1" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
@@ -181,8 +245,23 @@ export default function OffersPage() {
               <input className="input mt-1" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </div>
 
+            {editing ? (
+              <div className="border-t border-sandal-200 pt-3">
+                <label className="text-sm font-semibold text-ink-700">Banner Image</label>
+                {editing.banner_image && (
+                  <div className="w-full aspect-[3/1] rounded-lg overflow-hidden border border-sandal-200 mt-2 mb-2">
+                    <img src={editing.banner_image} className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <input type="file" accept="image/*" onChange={handleImageUpload} className="text-sm" />
+                <p className="text-xs text-ink-400 mt-1">Shown behind the offer text in the storefront carousel.</p>
+              </div>
+            ) : (
+              <p className="text-xs text-ink-400 border-t border-sandal-200 pt-3">Save the offer first, then add a banner image.</p>
+            )}
+
             <div className="flex gap-2 justify-end pt-2">
-              <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
+              <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Close</button>
               <button type="submit" className="btn-primary">Save Offer</button>
             </div>
           </form>

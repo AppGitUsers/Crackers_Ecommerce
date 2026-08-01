@@ -52,16 +52,6 @@ export default {
       boxShadow: {
         card: "0 2px 10px rgba(26, 26, 26, 0.07)",
       },
-      keyframes: {
-        // Content visibly travels left -> right (starts shifted left, ends at rest).
-        marquee: {
-          "0%": { transform: "translateX(-50%)" },
-          "100%": { transform: "translateX(0)" },
-        },
-      },
-      animation: {
-        marquee: "marquee 22s linear infinite",
-      },
     },
   },
   plugins: [],

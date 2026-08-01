@@ -26,6 +26,11 @@ export const OffersAPI = {
   create: (data) => api.post('/offers/', data),
   update: (id, data) => api.patch(`/offers/${id}/`, data),
   remove: (id) => api.delete(`/offers/${id}/`),
+  uploadBannerImage: (id, file) => {
+    const fd = new FormData()
+    fd.append('image', file)
+    return api.post(`/offers/${id}/upload_banner_image/`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+  },
 }
 
 export const OrdersAPI = {

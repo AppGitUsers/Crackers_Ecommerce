@@ -15,6 +15,7 @@ class Offer(models.Model):
     name = models.CharField(max_length=150, help_text="Shown in the top banner, e.g. 'Diwali Dhamaka'.")
     offer_type = models.CharField(max_length=20, choices=OfferType.choices)
     description = models.CharField(max_length=255, blank=True, help_text="Short banner text.")
+    banner_image = models.ImageField(upload_to="offers/", null=True, blank=True, help_text="Shown in the storefront offer carousel.")
     is_active = models.BooleanField(default=True)
     start_date = models.DateTimeField(null=True, blank=True)
     end_date = models.DateTimeField(null=True, blank=True)

@@ -2,13 +2,13 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
 const NAV_ITEMS = [
-  { to: '/admin', label: 'Dashboard', icon: '📊', end: true },
-  { to: '/admin/categories', label: 'Categories', icon: '🗂️' },
-  { to: '/admin/products', label: 'Products', icon: '🎇' },
-  { to: '/admin/orders', label: 'Orders', icon: '📦' },
-  { to: '/admin/offers', label: 'Offers', icon: '🏷️' },
-  { to: '/admin/finance', label: 'Finance', icon: '💰' },
-  { to: '/admin/calls', label: 'Calls', icon: '📞' },
+  { to: '/admin', label: 'Dashboard', end: true },
+  { to: '/admin/categories', label: 'Categories' },
+  { to: '/admin/products', label: 'Products' },
+  { to: '/admin/orders', label: 'Orders' },
+  { to: '/admin/offers', label: 'Offers'},
+  { to: '/admin/finance', label: 'Finance' },
+  { to: '/admin/calls', label: 'Calls'},
 ]
 
 export default function AdminLayout() {
