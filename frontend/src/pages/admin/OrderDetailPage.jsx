@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import { OrdersAPI } from '../../api/endpoints'
+import { PageLoader } from '../../components/admin/ui.jsx'
 
 const FULFILLMENT_OPTIONS = ['received', 'packed', 'out_for_delivery', 'delivered', 'cancelled']
 const PAYMENT_OPTIONS = ['pending', 'paid', 'failed', 'refunded']
@@ -28,19 +30,22 @@ export default function OrderDetailPage() {
     }
   }
 
-  if (!order) return <p className="text-ink-500">Loading…</p>
+  if (!order) return <PageLoader />
 
   return (
     <div className="max-w-4xl">
-      <Link to="/admin/orders" className="text-brand-600 text-sm font-semibold hover:text-brand-700">&larr; Back to Orders</Link>
+      <Link to="/admin/orders" className="inline-flex items-center gap-1.5 text-brand-600 text-sm font-semibold hover:text-brand-700">
+        <ArrowLeft size={15} />
+        Back to Orders
+      </Link>
       <div className="flex items-center justify-between mt-2 mb-6">
-        <h1 className="text-2xl font-extrabold text-ink-900">{order.order_number}</h1>
+        <h1 className="page-title">{order.order_number}</h1>
         <span className="text-ink-400 text-sm">{new Date(order.created_at).toLocaleString()}</span>
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="card p-4 col-span-2">
-          <h2 className="font-bold text-ink-900 mb-3">Items</h2>
+          <h2 className="section-title">Items</h2>
           <table className="w-full text-sm">
             <thead className="text-ink-500 text-left border-b border-sandal-200">
               <tr>
@@ -74,7 +79,7 @@ export default function OrderDetailPage() {
         </div>
 
         <div className="card p-4">
-          <h2 className="font-bold text-ink-900 mb-3">Customer</h2>
+          <h2 className="section-title">Customer</h2>
           <p className="font-semibold text-ink-900">{order.customer.name}</p>
           <p className="text-sm text-ink-500">{order.customer.phone}</p>
           <p className="text-sm text-ink-500 mt-2">{order.delivery_address || order.customer.address}</p>
@@ -86,7 +91,7 @@ export default function OrderDetailPage() {
 
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="card p-4">
-          <h2 className="font-bold text-ink-900 mb-3">Order Status</h2>
+          <h2 className="section-title">Order Status</h2>
           <div className="flex flex-wrap gap-2">
             {FULFILLMENT_OPTIONS.map((s) => (
               <button
@@ -103,7 +108,7 @@ export default function OrderDetailPage() {
           </div>
         </div>
         <div className="card p-4">
-          <h2 className="font-bold text-ink-900 mb-3">Payment Status</h2>
+          <h2 className="section-title">Payment Status</h2>
           <div className="flex flex-wrap gap-2">
             {PAYMENT_OPTIONS.map((s) => (
               <button
@@ -127,7 +132,7 @@ export default function OrderDetailPage() {
       </div>
 
       <div className="card p-4">
-        <h2 className="font-bold text-ink-900 mb-3">Status Timeline</h2>
+        <h2 className="section-title">Status Timeline</h2>
         <ul className="space-y-2 text-sm">
           {order.status_history.map((h) => (
             <li key={h.id} className="flex justify-between border-b border-sandal-100 pb-2 last:border-0">

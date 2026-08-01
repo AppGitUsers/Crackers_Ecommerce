@@ -3,8 +3,12 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from 'recharts'
+import {
+  ChevronLeft, ChevronRight, Download, Plus, TrendingUp, TrendingDown, PiggyBank, Percent,
+} from 'lucide-react'
 import { FinanceAPI } from '../../api/endpoints'
 import StatCard from '../../components/admin/StatCard.jsx'
+import { Modal } from '../../components/admin/ui.jsx'
 
 // Local-calendar-date formatting — toISOString() converts to UTC first, which
 // silently shifts the date by a day depending on the machine's timezone offset.
@@ -49,7 +53,7 @@ function CategoryDonut({ title, rows, emptyLabel }) {
   const total = rows.reduce((sum, r) => sum + Number(r.total), 0)
   return (
     <div className="card p-5">
-      <h2 className="font-bold text-ink-900 mb-1">{title}</h2>
+      <h2 className="section-title">{title}</h2>
       {rows.length === 0 ? (
         <p className="text-ink-400 text-sm py-14 text-center">{emptyLabel}</p>
       ) : (
@@ -148,35 +152,43 @@ export default function FinancePage() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h1 className="text-2xl font-extrabold text-ink-900">Finance</h1>
+      <div className="page-header">
+        <h1 className="page-title">Finance</h1>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 card px-2 py-1">
-            <button className="w-7 h-7 font-bold text-ink-600 hover:bg-sandal-100 rounded" onClick={() => shiftMonth(-1)}>‹</button>
+            <button className="w-7 h-7 flex items-center justify-center text-ink-600 hover:bg-sandal-100 rounded" onClick={() => shiftMonth(-1)}>
+              <ChevronLeft size={16} />
+            </button>
             <span className="font-semibold text-ink-900 text-sm w-32 text-center">{monthLabel}</span>
-            <button className="w-7 h-7 font-bold text-ink-600 hover:bg-sandal-100 rounded" onClick={() => shiftMonth(1)}>›</button>
+            <button className="w-7 h-7 flex items-center justify-center text-ink-600 hover:bg-sandal-100 rounded" onClick={() => shiftMonth(1)}>
+              <ChevronRight size={16} />
+            </button>
           </div>
           {!isCurrentMonth && (
             <button className="btn-secondary text-sm" onClick={() => setMonthStart(startOfMonth(new Date()))}>This Month</button>
           )}
           <button className="btn-primary text-sm" onClick={handleExport} disabled={exporting}>
-            {exporting ? 'Preparing…' : '⬇ Download Excel'}
+            <Download size={16} />
+            {exporting ? 'Preparing…' : 'Download Excel'}
           </button>
-          <button className="btn-secondary text-sm" onClick={() => setShowForm(true)}>+ Record Transaction</button>
+          <button className="btn-secondary text-sm" onClick={() => setShowForm(true)}>
+            <Plus size={16} />
+            Record Transaction
+          </button>
         </div>
       </div>
 
       {summary && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <StatCard label="Income" value={`₹${Number(summary.income).toLocaleString('en-IN')}`} icon="⬆️" accent="green" />
-          <StatCard label="Expense" value={`₹${Number(summary.expense).toLocaleString('en-IN')}`} icon="⬇️" accent="brand" />
-          <StatCard label="Savings" value={`₹${Number(summary.savings).toLocaleString('en-IN')}`} icon="🏦" accent="ink" />
-          <StatCard label="Savings Rate" value={`${savingsRate}%`} icon="📈" accent="gold" />
+          <StatCard label="Income" value={`₹${Number(summary.income).toLocaleString('en-IN')}`} icon={TrendingUp} accent="green" />
+          <StatCard label="Expense" value={`₹${Number(summary.expense).toLocaleString('en-IN')}`} icon={TrendingDown} accent="brand" />
+          <StatCard label="Savings" value={`₹${Number(summary.savings).toLocaleString('en-IN')}`} icon={PiggyBank} accent="ink" />
+          <StatCard label="Savings Rate" value={`${savingsRate}%`} icon={Percent} accent="gold" />
         </div>
       )}
 
       <div className="card p-5 mb-6">
-        <h2 className="font-bold text-ink-900 mb-4">Income vs Expense — last 6 months</h2>
+        <h2 className="section-title">Income vs Expense — last 6 months</h2>
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={trendData} barGap={4}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e6e6e6" vertical={false} />
@@ -195,79 +207,82 @@ export default function FinancePage() {
         <CategoryDonut title="Expense Breakdown" rows={expenseRows} emptyLabel="No expense recorded this month." />
       </div>
 
-      <div className="card overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-sandal-100 text-ink-600 text-left">
+      <div className="table-container">
+        <table className="table">
+          <thead>
             <tr>
-              <th className="px-4 py-3">Date</th>
-              <th className="px-4 py-3">Type</th>
-              <th className="px-4 py-3">Category</th>
-              <th className="px-4 py-3">Description</th>
-              <th className="px-4 py-3 text-right">Amount</th>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Category</th>
+              <th>Description</th>
+              <th className="text-right">Amount</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-sandal-100">
+          <tbody>
             {transactions.map((t) => (
               <tr key={t.id}>
-                <td className="px-4 py-3 text-ink-700">{t.date}</td>
-                <td className="px-4 py-3">
-                  <span className={`badge capitalize ${t.transaction_type === 'income' ? 'bg-green-100 text-green-700' : 'bg-brand-50 text-brand-700'}`}>
+                <td>{t.date}</td>
+                <td>
+                  <span className={`badge capitalize ${t.transaction_type === 'income' ? 'badge-green' : 'badge-brand'}`}>
                     {t.transaction_type}
                   </span>
                 </td>
-                <td className="px-4 py-3 capitalize text-ink-700">{t.category.replace(/_/g, ' ')}</td>
-                <td className="px-4 py-3 text-ink-500">{t.description || '—'}</td>
-                <td className="px-4 py-3 text-right font-semibold text-ink-900">₹{t.amount}</td>
+                <td className="capitalize">{t.category.replace(/_/g, ' ')}</td>
+                <td className="text-ink-500">{t.description || '—'}</td>
+                <td className="text-right font-semibold text-ink-900">₹{t.amount}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      {showForm && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-30 px-4">
-          <form onSubmit={handleSubmit} className="card p-6 w-full max-w-md space-y-3">
-            <h2 className="font-bold text-lg text-ink-900">Record Transaction</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-semibold text-ink-700">Type</label>
-                <select className="input mt-1" value={form.transaction_type} onChange={(e) => setForm({ ...form, transaction_type: e.target.value })}>
-                  <option value="income">Income</option>
-                  <option value="expense">Expense</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-ink-700">Category</label>
-                <select className="input mt-1" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-                  <option value="sales">Sales</option>
-                  <option value="manual_payment">Manual Order Payment</option>
-                  <option value="inventory_purchase">Inventory Purchase</option>
-                  <option value="delivery">Delivery / Logistics</option>
-                  <option value="marketing">Marketing</option>
-                  <option value="salary">Salary / Staff</option>
-                  <option value="misc">Miscellaneous</option>
-                </select>
-              </div>
+      <Modal
+        open={showForm}
+        onClose={() => setShowForm(false)}
+        title="Record Transaction"
+        footer={
+          <>
+            <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
+            <button type="submit" form="finance-transaction-form" className="btn-primary">Save</button>
+          </>
+        }
+      >
+        <form id="finance-transaction-form" onSubmit={handleSubmit} className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">Type</label>
+              <select className="input" value={form.transaction_type} onChange={(e) => setForm({ ...form, transaction_type: e.target.value })}>
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
+              </select>
             </div>
             <div>
-              <label className="text-sm font-semibold text-ink-700">Amount (₹)</label>
-              <input type="number" step="0.01" className="input mt-1" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required />
+              <label className="label">Category</label>
+              <select className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+                <option value="sales">Sales</option>
+                <option value="manual_payment">Manual Order Payment</option>
+                <option value="inventory_purchase">Inventory Purchase</option>
+                <option value="delivery">Delivery / Logistics</option>
+                <option value="marketing">Marketing</option>
+                <option value="salary">Salary / Staff</option>
+                <option value="misc">Miscellaneous</option>
+              </select>
             </div>
-            <div>
-              <label className="text-sm font-semibold text-ink-700">Date</label>
-              <input type="date" className="input mt-1" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
-            </div>
-            <div>
-              <label className="text-sm font-semibold text-ink-700">Description</label>
-              <input className="input mt-1" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-            </div>
-            <div className="flex gap-2 justify-end pt-2">
-              <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
-              <button type="submit" className="btn-primary">Save</button>
-            </div>
-          </form>
-        </div>
-      )}
+          </div>
+          <div>
+            <label className="label">Amount (₹)</label>
+            <input type="number" step="0.01" className="input" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required />
+          </div>
+          <div>
+            <label className="label">Date</label>
+            <input type="date" className="input" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
+          </div>
+          <div>
+            <label className="label">Description</label>
+            <input className="input" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }

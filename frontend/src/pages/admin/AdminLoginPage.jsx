@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { PartyPopper } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 export default function AdminLoginPage() {
@@ -28,7 +29,9 @@ export default function AdminLoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-ink-900 px-4">
       <div className="card p-8 w-full max-w-sm">
         <div className="text-center mb-6">
-          <div className="text-4xl mb-2">🎆</div>
+          <div className="w-14 h-14 rounded-2xl bg-brand-600 flex items-center justify-center mx-auto mb-3">
+            <PartyPopper size={26} className="text-gold-400" />
+          </div>
           <h1 className="text-xl font-extrabold text-ink-900">Sivakasi Crackers</h1>
           <p className="text-ink-500 text-sm">Admin CRM Login</p>
         </div>

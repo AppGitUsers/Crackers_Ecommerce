@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Search } from 'lucide-react'
 import { OrdersAPI } from '../../api/endpoints'
+import { PageLoader } from '../../components/admin/ui.jsx'
 
 const STATUS_COLORS = {
   received: 'bg-blue-100 text-blue-700',
@@ -37,16 +39,21 @@ export default function OrdersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-extrabold text-ink-900 mb-6">Orders</h1>
+      <div className="page-header">
+        <h1 className="page-title">Orders</h1>
+      </div>
 
       <div className="flex gap-3 mb-4">
-        <input
-          className="input max-w-xs"
-          placeholder="Search order #, name, phone"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && load()}
-        />
+        <div className="relative max-w-xs w-full">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
+          <input
+            className="input pl-9"
+            placeholder="Search order #, name, phone"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && load()}
+          />
+        </div>
         <select className="input w-52" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
           <option value="">All Statuses</option>
           <option value="received">Received</option>
@@ -59,39 +66,39 @@ export default function OrdersPage() {
       </div>
 
       {loading ? (
-        <p className="text-ink-500">Loading…</p>
+        <PageLoader />
       ) : (
-        <div className="card overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-sandal-100 text-ink-600 text-left">
+        <div className="table-container">
+          <table className="table">
+            <thead>
               <tr>
-                <th className="px-4 py-3">Order #</th>
-                <th className="px-4 py-3">Customer</th>
-                <th className="px-4 py-3">Items</th>
-                <th className="px-4 py-3">Total</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Payment</th>
-                <th className="px-4 py-3">Placed</th>
+                <th>Order #</th>
+                <th>Customer</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Payment</th>
+                <th>Placed</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-sandal-100">
+            <tbody>
               {orders.map((o) => (
                 <tr
                   key={o.id}
                   className="hover:bg-sandal-50 cursor-pointer"
                   onClick={() => navigate(`/admin/orders/${o.id}`)}
                 >
-                  <td className="px-4 py-3 font-semibold text-ink-900">{o.order_number}</td>
-                  <td className="px-4 py-3">{o.customer_name}<div className="text-xs text-ink-400">{o.customer_phone}</div></td>
-                  <td className="px-4 py-3">{o.item_count}</td>
-                  <td className="px-4 py-3 font-semibold text-ink-900">₹{o.total_amount}</td>
-                  <td className="px-4 py-3">
+                  <td className="font-semibold text-ink-900">{o.order_number}</td>
+                  <td>{o.customer_name}<div className="text-xs text-ink-400">{o.customer_phone}</div></td>
+                  <td>{o.item_count}</td>
+                  <td className="font-semibold text-ink-900">₹{o.total_amount}</td>
+                  <td>
                     <span className={`badge capitalize ${STATUS_COLORS[o.current_status]}`}>{o.current_status.replace(/_/g, ' ')}</span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <span className={`badge capitalize ${PAYMENT_COLORS[o.payment_status]}`}>{o.payment_status}</span>
                   </td>
-                  <td className="px-4 py-3 text-ink-400 text-xs">{new Date(o.created_at).toLocaleString()}</td>
+                  <td className="text-ink-400 text-xs">{new Date(o.created_at).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>

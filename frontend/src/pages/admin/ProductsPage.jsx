@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
+import { Plus, ImageOff } from 'lucide-react'
 import { CategoriesAdminAPI, ProductsAPI } from '../../api/endpoints'
+import { Modal, ConfirmDialog, PageLoader } from '../../components/admin/ui.jsx'
 
 const EMPTY_FORM = { category: '', name: '', description: '', price: '', stock_quantity: 0, unit_label: 'box', is_available: true }
 
@@ -11,6 +13,7 @@ export default function ProductsPage() {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   function load() {
     setLoading(true)
@@ -55,7 +58,6 @@ export default function ProductsPage() {
   }
 
   async function handleDelete(id) {
-    if (!confirm('Delete this product?')) return
     await ProductsAPI.remove(id)
     load()
   }
@@ -80,9 +82,12 @@ export default function ProductsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-extrabold text-ink-900">Products</h1>
-        <button className="btn-primary" onClick={openCreate}>+ New Product</button>
+      <div className="page-header">
+        <h1 className="page-title">Products</h1>
+        <button className="btn-primary" onClick={openCreate}>
+          <Plus size={16} />
+          New Product
+        </button>
       </div>
 
       <div className="mb-4">
@@ -93,43 +98,45 @@ export default function ProductsPage() {
       </div>
 
       {loading ? (
-        <p className="text-ink-500">Loading…</p>
+        <PageLoader />
       ) : (
-        <div className="card overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-sandal-100 text-ink-600 text-left">
+        <div className="table-container">
+          <table className="table">
+            <thead>
               <tr>
-                <th className="px-4 py-3">Product</th>
-                <th className="px-4 py-3">Category</th>
-                <th className="px-4 py-3">Price</th>
-                <th className="px-4 py-3">Stock</th>
-                <th className="px-4 py-3">Available</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Available</th>
+                <th className="text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-sandal-100">
+            <tbody>
               {products.map((p) => (
                 <tr key={p.id}>
-                  <td className="px-4 py-3 font-semibold text-ink-900 flex items-center gap-2">
-                    <div className="w-8 h-8 bg-sandal-100 rounded overflow-hidden flex items-center justify-center shrink-0">
-                      {p.primary_image ? <img src={p.primary_image} className="w-full h-full object-cover" /> : '🎇'}
+                  <td className="font-semibold text-ink-900">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-sandal-100 rounded overflow-hidden flex items-center justify-center shrink-0">
+                        {p.primary_image ? <img src={p.primary_image} className="w-full h-full object-cover" /> : <ImageOff size={14} className="text-ink-300" />}
+                      </div>
+                      {p.name}
                     </div>
-                    {p.name}
                   </td>
-                  <td className="px-4 py-3">{p.category_name}</td>
-                  <td className="px-4 py-3">₹{p.price}</td>
-                  <td className="px-4 py-3">{p.stock_quantity}</td>
-                  <td className="px-4 py-3">
+                  <td>{p.category_name}</td>
+                  <td>₹{p.price}</td>
+                  <td>{p.stock_quantity}</td>
+                  <td>
                     <button
-                      className={`badge ${p.is_available ? 'bg-green-100 text-green-700' : 'bg-ink-100 text-ink-500'}`}
+                      className={`badge ${p.is_available ? 'badge-green' : 'badge-ink'}`}
                       onClick={() => toggleAvailability(p)}
                     >
                       {p.is_available ? 'Available' : 'Hidden'}
                     </button>
                   </td>
-                  <td className="px-4 py-3 text-right space-x-3">
+                  <td className="text-right space-x-3">
                     <button className="text-brand-600 font-semibold hover:text-brand-700" onClick={() => openEdit(p.id)}>Edit</button>
-                    <button className="text-brand-600 font-semibold hover:text-brand-700" onClick={() => handleDelete(p.id)}>Delete</button>
+                    <button className="text-brand-600 font-semibold hover:text-brand-700" onClick={() => setDeleteTarget(p)}>Delete</button>
                   </td>
                 </tr>
               ))}
@@ -138,71 +145,80 @@ export default function ProductsPage() {
         </div>
       )}
 
-      {showForm && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-30 px-4 py-8 overflow-y-auto">
-          <form onSubmit={handleSubmit} className="card p-6 w-full max-w-lg space-y-3">
-            <h2 className="font-bold text-lg text-ink-900">{editing ? 'Edit Product' : 'New Product'}</h2>
-
+      <Modal
+        open={showForm}
+        onClose={() => setShowForm(false)}
+        title={editing ? 'Edit Product' : 'New Product'}
+        footer={
+          <>
+            <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Close</button>
+            <button type="submit" form="product-form" className="btn-primary">Save</button>
+          </>
+        }
+      >
+        <form id="product-form" onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label className="label">Category</label>
+            <select className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required>
+              <option value="">Select category…</option>
+              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="label">Name</label>
+            <input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+          </div>
+          <div>
+            <label className="label">Description</label>
+            <textarea className="input" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="text-sm font-semibold text-ink-700">Category</label>
-              <select className="input mt-1" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required>
-                <option value="">Select category…</option>
-                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              <label className="label">Price (₹)</label>
+              <input type="number" step="0.01" className="input" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required />
             </div>
             <div>
-              <label className="text-sm font-semibold text-ink-700">Name</label>
-              <input className="input mt-1" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+              <label className="label">Stock Qty</label>
+              <input type="number" className="input" value={form.stock_quantity} onChange={(e) => setForm({ ...form, stock_quantity: e.target.value })} required />
             </div>
             <div>
-              <label className="text-sm font-semibold text-ink-700">Description</label>
-              <textarea className="input mt-1" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              <label className="label">Unit</label>
+              <input className="input" value={form.unit_label} onChange={(e) => setForm({ ...form, unit_label: e.target.value })} />
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="text-sm font-semibold text-ink-700">Price (₹)</label>
-                <input type="number" step="0.01" className="input mt-1" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required />
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-ink-700">Stock Qty</label>
-                <input type="number" className="input mt-1" value={form.stock_quantity} onChange={(e) => setForm({ ...form, stock_quantity: e.target.value })} required />
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-ink-700">Unit</label>
-                <input className="input mt-1" value={form.unit_label} onChange={(e) => setForm({ ...form, unit_label: e.target.value })} />
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <input type="checkbox" checked={form.is_available} onChange={(e) => setForm({ ...form, is_available: e.target.checked })} />
-              <label className="text-sm font-semibold text-ink-700">Available for sale</label>
-            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <input type="checkbox" checked={form.is_available} onChange={(e) => setForm({ ...form, is_available: e.target.checked })} />
+            <label className="text-sm font-semibold text-ink-700">Available for sale</label>
+          </div>
 
-            {editing && (
-              <div className="border-t border-sandal-200 pt-3">
-                <label className="text-sm font-semibold text-ink-700">Photos</label>
-                <div className="flex flex-wrap gap-2 mt-2 mb-2">
-                  {editing.images.map((img) => (
-                    <div key={img.id} className="w-16 h-16 rounded-lg overflow-hidden border border-sandal-200">
-                      <img src={img.image} className="w-full h-full object-cover" />
-                    </div>
-                  ))}
-                </div>
-                {/* capture="environment" opens the phone camera directly; users can still choose "Photo Library" from the same picker for gallery images */}
-                <input type="file" accept="image/*" capture="environment" onChange={handleImageUpload} className="text-sm" />
-                <p className="text-xs text-ink-400 mt-1">Take a photo or choose from gallery.</p>
+          {editing && (
+            <div className="border-t border-sandal-200 pt-3">
+              <label className="label">Photos</label>
+              <div className="flex flex-wrap gap-2 mt-2 mb-2">
+                {editing.images.map((img) => (
+                  <div key={img.id} className="w-16 h-16 rounded-lg overflow-hidden border border-sandal-200">
+                    <img src={img.image} className="w-full h-full object-cover" />
+                  </div>
+                ))}
               </div>
-            )}
-            {!editing && (
-              <p className="text-xs text-ink-400 border-t border-sandal-200 pt-3">Save the product first, then add photos.</p>
-            )}
-
-            <div className="flex gap-2 justify-end pt-2">
-              <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Close</button>
-              <button type="submit" className="btn-primary">Save</button>
+              {/* capture="environment" opens the phone camera directly; users can still choose "Photo Library" from the same picker for gallery images */}
+              <input type="file" accept="image/*" capture="environment" onChange={handleImageUpload} className="text-sm" />
+              <p className="text-xs text-ink-400 mt-1">Take a photo or choose from gallery.</p>
             </div>
-          </form>
-        </div>
-      )}
+          )}
+          {!editing && (
+            <p className="text-xs text-ink-400 border-t border-sandal-200 pt-3">Save the product first, then add photos.</p>
+          )}
+        </form>
+      </Modal>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => handleDelete(deleteTarget.id)}
+        title="Delete product"
+        message={deleteTarget ? `Delete "${deleteTarget.name}"? This can't be undone.` : ''}
+      />
     </div>
   )
 }

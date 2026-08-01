@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
+import { Plus, ImageOff } from 'lucide-react'
 import { OffersAPI, ProductsAPI } from '../../api/endpoints'
+import { Modal, ConfirmDialog, PageLoader } from '../../components/admin/ui.jsx'
 
 const EMPTY_OFFER = {
   name: '', offer_type: 'buy_x_get_y', description: '', is_active: true, priority: 0,
@@ -14,6 +16,7 @@ export default function OffersPage() {
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY_OFFER)
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   function load() {
     setLoading(true)
@@ -101,7 +104,6 @@ export default function OffersPage() {
   }
 
   async function handleDelete(id) {
-    if (!confirm('Delete this offer?')) return
     await OffersAPI.remove(id)
     load()
   }
@@ -112,12 +114,15 @@ export default function OffersPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-extrabold text-ink-900">Offers</h1>
-        <button className="btn-primary" onClick={openCreate}>+ New Offer</button>
+      <div className="page-header">
+        <h1 className="page-title">Offers</h1>
+        <button className="btn-primary" onClick={openCreate}>
+          <Plus size={16} />
+          New Offer
+        </button>
       </div>
 
-      {loading ? <p className="text-ink-500">Loading…</p> : (
+      {loading ? <PageLoader /> : (
         <div className="grid grid-cols-2 gap-4">
           {offers.map((offer) => (
             <div key={offer.id} className="card overflow-hidden">
@@ -125,18 +130,18 @@ export default function OffersPage() {
                 {offer.banner_image ? (
                   <img src={offer.banner_image} alt={offer.name} className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-3xl text-ink-300">🎆</span>
+                  <ImageOff size={28} className="text-ink-300" />
                 )}
               </div>
               <div className="p-4">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="font-bold text-ink-900">{offer.name}</h3>
-                    <span className="badge bg-sandal-100 text-ink-700 capitalize">{offer.offer_type.replace(/_/g, ' ')}</span>
+                    <span className="badge badge-ink capitalize">{offer.offer_type.replace(/_/g, ' ')}</span>
                   </div>
                   <button
                     onClick={() => toggleActive(offer)}
-                    className={`badge ${offer.is_active ? 'bg-green-100 text-green-700' : 'bg-ink-100 text-ink-500'}`}
+                    className={`badge ${offer.is_active ? 'badge-green' : 'badge-ink'}`}
                   >
                     {offer.is_active ? 'Active' : 'Inactive'}
                   </button>
@@ -155,7 +160,7 @@ export default function OffersPage() {
                 )}
                 <div className="flex gap-3 mt-3">
                   <button className="text-brand-600 hover:text-brand-700 text-sm font-semibold" onClick={() => openEdit(offer)}>Edit</button>
-                  <button className="text-brand-600 hover:text-brand-700 text-sm font-semibold" onClick={() => handleDelete(offer.id)}>Delete</button>
+                  <button className="text-brand-600 hover:text-brand-700 text-sm font-semibold" onClick={() => setDeleteTarget(offer)}>Delete</button>
                 </div>
               </div>
             </div>
@@ -163,110 +168,120 @@ export default function OffersPage() {
         </div>
       )}
 
-      {showForm && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-30 px-4 py-8 overflow-y-auto">
-          <form onSubmit={handleSubmit} className="card p-6 w-full max-w-lg space-y-3">
-            <h2 className="font-bold text-lg text-ink-900">{editing ? 'Edit Offer' : 'New Offer'}</h2>
-            <div>
-              <label className="text-sm font-semibold text-ink-700">Name (shown in banner)</label>
-              <input className="input mt-1" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-            </div>
-            <div>
-              <label className="text-sm font-semibold text-ink-700">Type</label>
-              <select className="input mt-1" value={form.offer_type} onChange={(e) => setForm({ ...form, offer_type: e.target.value })}>
-                <option value="buy_x_get_y">Buy X Get Y</option>
-                <option value="amount_discount">Spend ₹X, Get ₹Y Off/Free</option>
-              </select>
-            </div>
+      <Modal
+        open={showForm}
+        onClose={() => setShowForm(false)}
+        title={editing ? 'Edit Offer' : 'New Offer'}
+        footer={
+          <>
+            <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Close</button>
+            <button type="submit" form="offer-form" className="btn-primary">Save Offer</button>
+          </>
+        }
+      >
+        <form id="offer-form" onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label className="label">Name (shown in banner)</label>
+            <input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+          </div>
+          <div>
+            <label className="label">Type</label>
+            <select className="input" value={form.offer_type} onChange={(e) => setForm({ ...form, offer_type: e.target.value })}>
+              <option value="buy_x_get_y">Buy X Get Y</option>
+              <option value="amount_discount">Spend ₹X, Get ₹Y Off/Free</option>
+            </select>
+          </div>
 
-            {form.offer_type === 'buy_x_get_y' && (
-              <div className="border border-sandal-200 rounded-lg p-3 space-y-2">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-semibold text-ink-700">Buy Qty</label>
-                    <input type="number" className="input mt-1" value={form.buy_x_get_y.buy_quantity}
-                      onChange={(e) => setForm({ ...form, buy_x_get_y: { ...form.buy_x_get_y, buy_quantity: e.target.value } })} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-ink-700">Get Qty Free</label>
-                    <input type="number" className="input mt-1" value={form.buy_x_get_y.get_quantity}
-                      onChange={(e) => setForm({ ...form, buy_x_get_y: { ...form.buy_x_get_y, get_quantity: e.target.value } })} />
-                  </div>
+          {form.offer_type === 'buy_x_get_y' && (
+            <div className="border border-sandal-200 rounded-lg p-3 space-y-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label">Buy Qty</label>
+                  <input type="number" className="input" value={form.buy_x_get_y.buy_quantity}
+                    onChange={(e) => setForm({ ...form, buy_x_get_y: { ...form.buy_x_get_y, buy_quantity: e.target.value } })} />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-ink-700">Eligible "Buy" Products (ctrl/cmd+click to multi-select)</label>
-                  <select multiple className="input mt-1 h-28"
-                    onChange={multiSelect(products, (val) => setForm({ ...form, buy_x_get_y: { ...form.buy_x_get_y, buy_products: val } }))}>
-                    {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-ink-700">Eligible "Free" Products (leave empty = same as bought item)</label>
-                  <select multiple className="input mt-1 h-28"
-                    onChange={multiSelect(products, (val) => setForm({ ...form, buy_x_get_y: { ...form.buy_x_get_y, free_products: val } }))}>
-                    {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
+                  <label className="label">Get Qty Free</label>
+                  <input type="number" className="input" value={form.buy_x_get_y.get_quantity}
+                    onChange={(e) => setForm({ ...form, buy_x_get_y: { ...form.buy_x_get_y, get_quantity: e.target.value } })} />
                 </div>
               </div>
-            )}
-
-            {form.offer_type === 'amount_discount' && (
-              <div className="border border-sandal-200 rounded-lg p-3 space-y-2">
-                <div>
-                  <label className="text-xs font-semibold text-ink-700">Minimum Purchase (₹)</label>
-                  <input type="number" className="input mt-1" value={form.amount_discount.min_purchase_amount}
-                    onChange={(e) => setForm({ ...form, amount_discount: { ...form.amount_discount, min_purchase_amount: e.target.value } })} />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-ink-700">Discount Type</label>
-                  <select className="input mt-1" value={form.amount_discount.discount_type}
-                    onChange={(e) => setForm({ ...form, amount_discount: { ...form.amount_discount, discount_type: e.target.value } })}>
-                    <option value="flat_discount">Flat Rupee Discount</option>
-                    <option value="free_products_worth">Free Products Worth ₹</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-ink-700">Value (₹)</label>
-                  <input type="number" className="input mt-1" value={form.amount_discount.discount_value}
-                    onChange={(e) => setForm({ ...form, amount_discount: { ...form.amount_discount, discount_value: e.target.value } })} />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-ink-700">Applicable Products (empty = whole cart)</label>
-                  <select multiple className="input mt-1 h-28"
-                    onChange={multiSelect(products, (val) => setForm({ ...form, amount_discount: { ...form.amount_discount, applicable_products: val } }))}>
-                    {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
-                </div>
+              <div>
+                <label className="label">Eligible "Buy" Products (ctrl/cmd+click to multi-select)</label>
+                <select multiple className="input h-28"
+                  onChange={multiSelect(products, (val) => setForm({ ...form, buy_x_get_y: { ...form.buy_x_get_y, buy_products: val } }))}>
+                  {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
               </div>
-            )}
-
-            <div>
-              <label className="text-sm font-semibold text-ink-700">Banner Description (optional)</label>
-              <input className="input mt-1" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-            </div>
-
-            {editing ? (
-              <div className="border-t border-sandal-200 pt-3">
-                <label className="text-sm font-semibold text-ink-700">Banner Image</label>
-                {editing.banner_image && (
-                  <div className="w-full aspect-[3/1] rounded-lg overflow-hidden border border-sandal-200 mt-2 mb-2">
-                    <img src={editing.banner_image} className="w-full h-full object-cover" />
-                  </div>
-                )}
-                <input type="file" accept="image/*" onChange={handleImageUpload} className="text-sm" />
-                <p className="text-xs text-ink-400 mt-1">Shown behind the offer text in the storefront carousel.</p>
+              <div>
+                <label className="label">Eligible "Free" Products (leave empty = same as bought item)</label>
+                <select multiple className="input h-28"
+                  onChange={multiSelect(products, (val) => setForm({ ...form, buy_x_get_y: { ...form.buy_x_get_y, free_products: val } }))}>
+                  {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
               </div>
-            ) : (
-              <p className="text-xs text-ink-400 border-t border-sandal-200 pt-3">Save the offer first, then add a banner image.</p>
-            )}
-
-            <div className="flex gap-2 justify-end pt-2">
-              <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Close</button>
-              <button type="submit" className="btn-primary">Save Offer</button>
             </div>
-          </form>
-        </div>
-      )}
+          )}
+
+          {form.offer_type === 'amount_discount' && (
+            <div className="border border-sandal-200 rounded-lg p-3 space-y-2">
+              <div>
+                <label className="label">Minimum Purchase (₹)</label>
+                <input type="number" className="input" value={form.amount_discount.min_purchase_amount}
+                  onChange={(e) => setForm({ ...form, amount_discount: { ...form.amount_discount, min_purchase_amount: e.target.value } })} />
+              </div>
+              <div>
+                <label className="label">Discount Type</label>
+                <select className="input" value={form.amount_discount.discount_type}
+                  onChange={(e) => setForm({ ...form, amount_discount: { ...form.amount_discount, discount_type: e.target.value } })}>
+                  <option value="flat_discount">Flat Rupee Discount</option>
+                  <option value="free_products_worth">Free Products Worth ₹</option>
+                </select>
+              </div>
+              <div>
+                <label className="label">Value (₹)</label>
+                <input type="number" className="input" value={form.amount_discount.discount_value}
+                  onChange={(e) => setForm({ ...form, amount_discount: { ...form.amount_discount, discount_value: e.target.value } })} />
+              </div>
+              <div>
+                <label className="label">Applicable Products (empty = whole cart)</label>
+                <select multiple className="input h-28"
+                  onChange={multiSelect(products, (val) => setForm({ ...form, amount_discount: { ...form.amount_discount, applicable_products: val } }))}>
+                  {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="label">Banner Description (optional)</label>
+            <input className="input" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          </div>
+
+          {editing ? (
+            <div className="border-t border-sandal-200 pt-3">
+              <label className="label">Banner Image</label>
+              {editing.banner_image && (
+                <div className="w-full aspect-[3/1] rounded-lg overflow-hidden border border-sandal-200 mt-2 mb-2">
+                  <img src={editing.banner_image} className="w-full h-full object-cover" />
+                </div>
+              )}
+              <input type="file" accept="image/*" onChange={handleImageUpload} className="text-sm" />
+              <p className="text-xs text-ink-400 mt-1">Shown behind the offer text in the storefront carousel.</p>
+            </div>
+          ) : (
+            <p className="text-xs text-ink-400 border-t border-sandal-200 pt-3">Save the offer first, then add a banner image.</p>
+          )}
+        </form>
+      </Modal>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => handleDelete(deleteTarget.id)}
+        title="Delete offer"
+        message={deleteTarget ? `Delete "${deleteTarget.name}"? This can't be undone.` : ''}
+      />
     </div>
   )
 }

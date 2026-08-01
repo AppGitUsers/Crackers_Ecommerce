@@ -1,4 +1,4 @@
-export default function StatCard({ label, value, icon, accent = 'brand' }) {
+export default function StatCard({ label, value, icon: Icon, accent = 'brand' }) {
   const accentClasses = {
     brand: 'bg-brand-50 text-brand-600',
     ink: 'bg-ink-100 text-ink-700',
@@ -8,13 +8,13 @@ export default function StatCard({ label, value, icon, accent = 'brand' }) {
     sandal: 'bg-sandal-100 text-ink-700',
   }
   return (
-    <div className="card p-4 flex items-center gap-4">
-      <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl ${accentClasses[accent]}`}>
-        {icon}
+    <div className="kpi-card">
+      <div className={`kpi-icon ${accentClasses[accent]}`}>
+        <Icon size={20} />
       </div>
-      <div>
+      <div className="min-w-0">
         <p className="text-xs font-semibold text-ink-400 uppercase tracking-wide">{label}</p>
-        <p className="text-xl font-extrabold text-ink-900">{value}</p>
+        <p className="text-xl font-extrabold text-ink-900 truncate">{value}</p>
       </div>
     </div>
   )

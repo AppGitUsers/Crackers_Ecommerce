@@ -25,3 +25,121 @@ body {
 .badge {
   @apply inline-block text-xs font-semibold px-2 py-1 rounded-full;
 }
+
+/* ---- Admin CRM component layer ---- */
+
+.btn-outline {
+  @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-brand-500 text-brand-600 text-sm font-semibold hover:bg-brand-50 transition-colors;
+}
+
+.btn-ghost {
+  @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-ink-600 text-sm font-semibold hover:bg-sandal-100 transition-colors;
+}
+
+.btn-danger {
+  @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors disabled:opacity-50;
+}
+
+.input-sm {
+  @apply w-full border border-sandal-300 rounded-md px-3 py-1.5 text-sm text-ink-900 focus:outline-none focus:ring-1 focus:ring-brand-400 bg-white;
+}
+
+.select {
+  @apply w-full border border-sandal-300 rounded-lg px-3 py-2 text-sm text-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white cursor-pointer;
+}
+
+.label {
+  @apply block text-xs font-semibold text-ink-500 uppercase tracking-wide mb-1;
+}
+
+/* KPI cards */
+.kpi-card {
+  @apply card p-4 flex items-center gap-4;
+}
+.kpi-icon {
+  @apply w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0;
+}
+
+/* Badges */
+.badge-green {
+  @apply badge bg-green-100 text-green-700;
+}
+.badge-brand {
+  @apply badge bg-brand-50 text-brand-700;
+}
+.badge-gold {
+  @apply badge bg-gold-500/10 text-gold-600;
+}
+.badge-ink {
+  @apply badge bg-ink-100 text-ink-500;
+}
+.badge-blue {
+  @apply badge bg-blue-100 text-blue-700;
+}
+.badge-purple {
+  @apply badge bg-purple-100 text-purple-700;
+}
+
+/* Table */
+.table-container {
+  @apply card overflow-hidden;
+}
+.table {
+  @apply w-full text-sm;
+}
+.table thead {
+  @apply bg-sandal-100 text-ink-600 text-left;
+}
+.table th {
+  @apply px-4 py-3 text-xs font-semibold uppercase tracking-wide;
+}
+.table tbody {
+  @apply divide-y divide-sandal-100;
+}
+.table td {
+  @apply px-4 py-3 text-ink-700;
+}
+
+/* Modal */
+.modal-overlay {
+  @apply fixed inset-0 bg-black/30 z-30 flex items-center justify-center px-4 py-8 overflow-y-auto;
+}
+.modal-box {
+  @apply card w-full max-w-lg;
+}
+.modal-header {
+  @apply flex items-center justify-between px-5 py-4 border-b border-sandal-200;
+}
+.modal-body {
+  @apply px-5 py-4;
+}
+.modal-footer {
+  @apply flex items-center justify-end gap-2 px-5 py-4 border-t border-sandal-200;
+}
+
+/* Page header */
+.page-header {
+  @apply flex flex-wrap items-center justify-between gap-3 mb-6;
+}
+.page-title {
+  @apply text-2xl font-extrabold text-ink-900;
+}
+.page-subtitle {
+  @apply text-sm text-ink-500 mt-0.5;
+}
+
+/* Section */
+.section-title {
+  @apply text-base font-bold text-ink-900 mb-4 flex items-center gap-2;
+}
+.divider {
+  @apply border-t border-sandal-200 my-5;
+}
+
+/* Sidebar */
+.sidebar-link {
+  @apply flex items-center gap-3 px-5 py-2.5 text-sm font-semibold transition-colors border-l-4 text-sandal-200 hover:bg-ink-800 border-transparent;
+}
+.sidebar-link.active {
+  @apply bg-ink-800 text-white border-brand-500;
+}
