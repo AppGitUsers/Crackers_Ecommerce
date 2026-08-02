@@ -28,7 +28,7 @@ export default function AdminLayout() {
   }
 
   return (
-    <div className="min-h-screen flex bg-sandal-50">
+    <div className="min-h-screen bg-sandal-50">
       {/* Mobile/tablet backdrop, shown while the drawer is open */}
       {sidebarOpen && (
         <div
@@ -37,10 +37,12 @@ export default function AdminLayout() {
         />
       )}
 
+      {/* Fixed to the viewport at every size — its height is always exactly
+          the viewport height, so it never stretches or scrolls with the page. */}
       <aside
         className={`fixed inset-y-0 left-0 z-40 w-64 bg-ink-900 text-sandal-200 flex flex-col shrink-0
           transition-transform duration-200 ease-in-out
-          lg:sticky lg:top-0 lg:h-screen lg:translate-x-0
+          lg:translate-x-0
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <div className="px-5 py-5 border-b border-ink-700 flex items-center justify-between gap-2.5">
@@ -86,7 +88,7 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 lg:ml-64">
         {/* Mobile/tablet top bar — gives access to the drawer once it's closed */}
         <header className="lg:hidden sticky top-0 z-20 bg-white border-b border-sandal-200 px-4 py-3 flex items-center gap-3">
           <button
