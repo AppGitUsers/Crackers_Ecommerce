@@ -22,7 +22,7 @@ export default function HomePage() {
   }, [selectedCategory])
 
   return (
-    <div>
+    <div className="pb-20 xl:pb-0">
       <div className="rounded-2xl bg-ink-900 text-white px-6 py-8 sm:px-10 sm:py-10 mb-8 relative overflow-hidden">
         <div className="absolute -right-6 -top-6 text-8xl opacity-10 select-none">🎆</div>
         <p className="text-brand-400 font-bold uppercase tracking-widest text-xs mb-2">Sivakasi Crackers</p>
