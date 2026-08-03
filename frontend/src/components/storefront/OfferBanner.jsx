@@ -14,14 +14,26 @@ function offerMechanicText(offer) {
 }
 
 function Slide({ offer }) {
+  // If the banner image 404s or the request drops (slow/flaky network,
+  // media server hiccup), fall back to the plain gradient instead of
+  // leaving the browser's broken-image box showing through the overlay's
+  // transparent side.
+  const [imgFailed, setImgFailed] = useState(false)
+  const showImage = Boolean(offer.banner_image) && !imgFailed
+
   return (
     <div className="relative w-full h-full shrink-0 overflow-hidden bg-ink-900">
-      {offer.banner_image && (
-        <img src={offer.banner_image} alt={offer.name} className="absolute inset-0 w-full h-full object-cover" />
+      {offer.banner_image && !imgFailed && (
+        <img
+          src={offer.banner_image}
+          alt={offer.name}
+          className="absolute inset-0 w-full h-full object-cover"
+          onError={() => setImgFailed(true)}
+        />
       )}
       <div
         className={`absolute inset-0 ${
-          offer.banner_image
+          showImage
             ? 'bg-gradient-to-r from-black/75 via-black/45 to-transparent'
             : 'bg-gradient-to-r from-brand-700 to-ink-900'
         }`}

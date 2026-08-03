@@ -9,9 +9,31 @@ export default function StorefrontLayout() {
   const { totalItems } = useCart()
 
   useEffect(() => {
-    OffersAPI.active()
-      .then(({ data }) => setOffers(data))
-      .catch(() => setOffers([]))
+    // `cancelled` guards against React (StrictMode in dev, or any future
+    // remount) firing this effect twice: without it, whichever of the two
+    // requests resolves LAST wins — if that's a transient failure racing
+    // behind a successful first request, it silently wipes out good data
+    // with an empty array and the banner just doesn't show.
+    let cancelled = false
+
+    async function load(retriesLeft = 2) {
+      try {
+        const { data } = await OffersAPI.active()
+        if (!cancelled) setOffers(data)
+      } catch {
+        if (cancelled) return
+        if (retriesLeft > 0) {
+          setTimeout(() => load(retriesLeft - 1), 800)
+        } else {
+          setOffers([])
+        }
+      }
+    }
+
+    load()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   return (
