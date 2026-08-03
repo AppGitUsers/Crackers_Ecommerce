@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import { OrdersAPI } from '../../api/endpoints'
 
 const FULFILLMENT_STEPS = [
@@ -96,6 +98,10 @@ export default function MyOrdersPage() {
 
   return (
     <div className="max-w-lg mx-auto">
+      <Link to="/" className="inline-flex items-center gap-1.5 text-brand-600 text-sm font-semibold hover:text-brand-700 mb-3">
+        <ArrowLeft size={15} />
+        Back to Shopping
+      </Link>
       <h1 className="text-xl font-extrabold text-ink-900 mb-4">My Orders</h1>
       <form onSubmit={handleLookup} className="flex gap-2 mb-6">
         <input

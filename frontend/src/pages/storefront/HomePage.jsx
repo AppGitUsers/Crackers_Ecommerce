@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { CategoriesAPI, ProductsAPI } from '../../api/endpoints'
 import CategoryFilter from '../../components/storefront/CategoryFilter.jsx'
 import ProductCard from '../../components/storefront/ProductCard.jsx'
@@ -21,6 +21,21 @@ export default function HomePage() {
       .finally(() => setLoading(false))
   }, [selectedCategory])
 
+  // Group the current product list by category (in the category's own
+  // display order) instead of one flat grid — a category with no products
+  // in the current view is simply skipped, so this works the same whether
+  // "All" or a single category is selected.
+  const sections = useMemo(() => {
+    const byCategory = new Map()
+    for (const product of products) {
+      if (!byCategory.has(product.category)) byCategory.set(product.category, [])
+      byCategory.get(product.category).push(product)
+    }
+    return categories
+      .filter((cat) => byCategory.has(cat.id))
+      .map((cat) => ({ category: cat, products: byCategory.get(cat.id) }))
+  }, [products, categories])
+
   return (
     <div className="pb-20 xl:pb-0">
       <div className="rounded-2xl bg-ink-900 text-white px-6 py-8 sm:px-10 sm:py-10 mb-8 relative overflow-hidden">
@@ -39,9 +54,19 @@ export default function HomePage() {
       ) : products.length === 0 ? (
         <div className="text-center py-16 text-ink-400">No products found in this category.</div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+        <div className="space-y-10">
+          {sections.map(({ category, products: categoryProducts }) => (
+            <section key={category.id}>
+              <div className="flex items-baseline gap-2 border-b border-sandal-200 pb-2 mb-4">
+                <h2 className="text-lg font-extrabold text-ink-900">{category.name}</h2>
+                <span className="text-xs font-semibold text-ink-400">{categoryProducts.length} item{categoryProducts.length === 1 ? '' : 's'}</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {categoryProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       )}

@@ -1,21 +1,33 @@
 import { Link, useNavigate } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 
 export default function CartPage() {
   const { items, setQuantity, removeItem, subtotal } = useCart()
   const navigate = useNavigate()
 
+  const backLink = (
+    <Link to="/" className="inline-flex items-center gap-1.5 text-brand-600 text-sm font-semibold hover:text-brand-700">
+      <ArrowLeft size={15} />
+      Back to Shopping
+    </Link>
+  )
+
   if (items.length === 0) {
     return (
-      <div className="text-center py-20">
-        <p className="text-ink-600 mb-4">Your cart is empty.</p>
-        <Link to="/" className="btn-primary">Browse products</Link>
+      <div className="max-w-2xl mx-auto">
+        <div className="mb-3">{backLink}</div>
+        <div className="text-center py-20">
+          <p className="text-ink-600 mb-4">Your cart is empty.</p>
+          <Link to="/" className="btn-primary">Browse products</Link>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="max-w-2xl mx-auto">
+      <div className="mb-3">{backLink}</div>
       <h1 className="text-xl font-extrabold text-ink-900 mb-4">Your Cart</h1>
       <div className="card divide-y divide-sandal-200">
         {items.map((item) => (
