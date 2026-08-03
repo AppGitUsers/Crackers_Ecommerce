@@ -1,10 +1,8 @@
-import { useState } from 'react'
 import { useCart } from '../../context/CartContext'
 
 export default function ProductCard({ product }) {
   const { items, addItem, setQuantity } = useCart()
   const cartLine = items.find((i) => i.product_id === product.id)
-  const [pendingQty, setPendingQty] = useState(1)
 
   const inCartQty = cartLine?.quantity || 0
 
@@ -44,26 +42,9 @@ export default function ProductCard({ product }) {
           </button>
         </div>
       ) : (
-        <div className="flex items-center gap-2 mt-3">
-          <div className="flex items-center border border-sandal-300 rounded-lg overflow-hidden">
-            <button
-              className="w-8 h-8 font-bold text-brand-600 hover:bg-sandal-100"
-              onClick={() => setPendingQty((q) => Math.max(1, q - 1))}
-            >
-              −
-            </button>
-            <span className="w-8 text-center font-semibold text-ink-900">{pendingQty}</span>
-            <button
-              className="w-8 h-8 font-bold text-brand-600 hover:bg-sandal-100"
-              onClick={() => setPendingQty((q) => q + 1)}
-            >
-              +
-            </button>
-          </div>
-          <button className="btn-primary flex-1 text-sm" onClick={() => addItem(product, pendingQty)}>
-            Add
-          </button>
-        </div>
+        <button className="btn-primary w-full mt-3 text-sm" onClick={() => addItem(product, 1)}>
+          Add
+        </button>
       )}
     </div>
   )
