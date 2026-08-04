@@ -1,10 +1,32 @@
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Gift, Tag, CheckCircle2 } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
+import { OffersAPI, ProductsAPI } from '../../api/endpoints'
+import { getUnlockedOffers, describeUnlockedOffer } from '../../utils/offers'
+
+const OFFER_ICONS = {
+  buy_x_get_y: Gift,
+  free_products_worth: Gift,
+  flat_discount: Tag,
+}
 
 export default function CartPage() {
   const { items, setQuantity, removeItem, subtotal } = useCart()
   const navigate = useNavigate()
+
+  const [offers, setOffers] = useState([])
+  const [products, setProducts] = useState([])
+
+  useEffect(() => {
+    OffersAPI.active().then(({ data }) => setOffers(data)).catch(() => setOffers([]))
+    ProductsAPI.list().then(({ data }) => setProducts(data.results || data)).catch(() => setProducts([]))
+  }, [])
+
+  const unlockedOffers = useMemo(
+    () => getUnlockedOffers(items, offers, products),
+    [items, offers, products]
+  )
 
   const backLink = (
     <Link to="/" className="inline-flex items-center gap-1.5 text-brand-600 text-sm font-semibold hover:text-brand-700">
@@ -29,6 +51,32 @@ export default function CartPage() {
     <div className="max-w-2xl mx-auto">
       <div className="mb-3">{backLink}</div>
       <h1 className="text-xl font-extrabold text-ink-900 mb-4">Your Cart</h1>
+
+      {unlockedOffers.length > 0 && (
+        <div className="card p-4 mb-4 border-2 border-brand-200 bg-brand-50/50">
+          <div className="flex items-center gap-2 mb-2">
+            <CheckCircle2 size={18} className="text-brand-600" />
+            <h2 className="font-bold text-ink-900">Offer{unlockedOffers.length > 1 ? 's' : ''} Unlocked!</h2>
+          </div>
+          <div className="space-y-2.5">
+            {unlockedOffers.map((u) => {
+              const Icon = OFFER_ICONS[u.type] || Gift
+              return (
+                <div key={u.id} className="flex items-start gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center shrink-0 mt-0.5">
+                    <Icon size={14} className="text-brand-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-ink-900">{u.offerName}</p>
+                    <p className="text-sm text-ink-600">{describeUnlockedOffer(u)}</p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="card divide-y divide-sandal-200">
         {items.map((item) => (
           <div key={item.product_id} className="flex items-center gap-3 p-4">
@@ -53,7 +101,9 @@ export default function CartPage() {
         <span className="font-semibold text-ink-700">Subtotal</span>
         <span className="text-xl font-extrabold text-ink-900">₹{subtotal.toFixed(2)}</span>
       </div>
-      <p className="text-xs text-ink-400 mt-1">Offers, if any, are applied at checkout.</p>
+      <p className="text-xs text-ink-400 mt-1">
+        {unlockedOffers.length > 0 ? 'Offer details above will be applied at checkout.' : 'Offers, if any, are applied at checkout.'}
+      </p>
 
       <button className="btn-primary w-full mt-4 py-3" onClick={() => navigate('/checkout')}>
         Proceed to Checkout
