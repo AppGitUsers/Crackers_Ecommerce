@@ -17,7 +17,9 @@ class CategoryViewSet(viewsets.ModelViewSet):
     search_fields = ["name"]
 
     def get_queryset(self):
-        qs = Category.objects.annotate(product_count=Count("products"))
+        # annotate() drops the model's default Meta.ordering, so it has to be
+        # re-applied explicitly or display_order is silently ignored.
+        qs = Category.objects.annotate(product_count=Count("products")).order_by("display_order", "name")
         if not (self.request.user and self.request.user.is_authenticated):
             qs = qs.filter(is_active=True)
         return qs
