@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { OrdersAPI } from '../../api/endpoints'
 import { PageLoader } from '../../components/admin/ui.jsx'
+
+const PAGE_SIZE = 20
 
 const STATUS_COLORS = {
   received: 'bg-blue-100 text-blue-700',
@@ -20,22 +22,34 @@ const PAYMENT_COLORS = {
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState([])
+  const [count, setCount] = useState(0)
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('')
   const [search, setSearch] = useState('')
   const navigate = useNavigate()
 
-  function load() {
+  function load(pageToLoad = page) {
     setLoading(true)
-    const params = {}
+    const params = { page: pageToLoad }
     if (statusFilter) params.current_status = statusFilter
     if (search) params.search = search
     OrdersAPI.list(params)
-      .then(({ data }) => setOrders(data.results || data))
+      .then(({ data }) => {
+        setOrders(data.results || data)
+        setCount(data.count ?? (data.results || data).length)
+      })
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [statusFilter])
+  useEffect(() => { setPage(1); load(1) }, [statusFilter])
+
+  function goToPage(p) {
+    setPage(p)
+    load(p)
+  }
+
+  const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE))
 
   return (
     <div>
@@ -51,7 +65,7 @@ export default function OrdersPage() {
             placeholder="Search order #, name, phone"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && load()}
+            onKeyDown={(e) => e.key === 'Enter' && goToPage(1)}
           />
         </div>
         <select className="input w-52" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
@@ -62,7 +76,7 @@ export default function OrdersPage() {
           <option value="delivered">Delivered</option>
           <option value="cancelled">Cancelled</option>
         </select>
-        <button className="btn-secondary" onClick={load}>Search</button>
+        <button className="btn-secondary" onClick={() => goToPage(1)}>Search</button>
       </div>
 
       {loading ? (
@@ -129,6 +143,32 @@ export default function OrdersPage() {
               </tbody>
             </table>
           </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4">
+              <p className="text-sm text-ink-400">
+                Page {page} of {totalPages} · {count} order{count === 1 ? '' : 's'}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  className="btn-secondary px-3 py-1.5"
+                  disabled={page <= 1}
+                  onClick={() => goToPage(page - 1)}
+                >
+                  <ChevronLeft size={16} />
+                  Prev
+                </button>
+                <button
+                  className="btn-secondary px-3 py-1.5"
+                  disabled={page >= totalPages}
+                  onClick={() => goToPage(page + 1)}
+                >
+                  Next
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

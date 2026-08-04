@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Plus, CheckCircle2, Minus } from 'lucide-react'
+import { Plus, CheckCircle2, Minus, ChevronLeft, ChevronRight } from 'lucide-react'
 import { CallsAPI, CustomersAPI } from '../../api/endpoints'
 import { Modal, PageLoader } from '../../components/admin/ui.jsx'
+
+const PAGE_SIZE = 20
 
 const STATUS_OPTIONS = [
   { value: 'not_called', label: 'Not Called Yet', color: 'bg-ink-100 text-ink-500' },
@@ -28,21 +30,37 @@ function BoolIndicator({ value }) {
 export default function CallsPage() {
   const [calls, setCalls] = useState([])
   const [customers, setCustomers] = useState([])
+  const [count, setCount] = useState(0)
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
 
-  function load() {
+  function load(pageToLoad = page) {
     setLoading(true)
-    const params = statusFilter ? { status: statusFilter } : {}
-    CallsAPI.list(params).then(({ data }) => setCalls(data.results || data)).finally(() => setLoading(false))
+    const params = { page: pageToLoad }
+    if (statusFilter) params.status = statusFilter
+    CallsAPI.list(params)
+      .then(({ data }) => {
+        setCalls(data.results || data)
+        setCount(data.count ?? (data.results || data).length)
+      })
+      .finally(() => setLoading(false))
   }
 
   useEffect(() => {
-    load()
+    setPage(1)
+    load(1)
     CustomersAPI.list().then(({ data }) => setCustomers(data.results || data))
   }, [statusFilter])
+
+  function goToPage(p) {
+    setPage(p)
+    load(p)
+  }
+
+  const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE))
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -160,6 +178,32 @@ export default function CallsPage() {
               </tbody>
             </table>
           </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4">
+              <p className="text-sm text-ink-400">
+                Page {page} of {totalPages} · {count} call{count === 1 ? '' : 's'}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  className="btn-secondary px-3 py-1.5"
+                  disabled={page <= 1}
+                  onClick={() => goToPage(page - 1)}
+                >
+                  <ChevronLeft size={16} />
+                  Prev
+                </button>
+                <button
+                  className="btn-secondary px-3 py-1.5"
+                  disabled={page >= totalPages}
+                  onClick={() => goToPage(page + 1)}
+                >
+                  Next
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
 
