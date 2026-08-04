@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, ImageOff } from 'lucide-react'
+import { Plus, ImageOff, X } from 'lucide-react'
 import { OffersAPI, ProductsAPI } from '../../api/endpoints'
 import { Modal, ConfirmDialog, PageLoader } from '../../components/admin/ui.jsx'
 
@@ -7,6 +7,49 @@ const EMPTY_OFFER = {
   name: '', offer_type: 'buy_x_get_y', description: '', is_active: true, priority: 0,
   buy_x_get_y: { buy_quantity: 1, get_quantity: 1, buy_products: [], free_products: [] },
   amount_discount: { min_purchase_amount: '', discount_type: 'flat_discount', discount_value: '', applicable_products: [] },
+}
+
+function productNames(ids, products) {
+  return ids
+    .map((id) => products.find((p) => p.id === id)?.name)
+    .filter(Boolean)
+}
+
+function ProductMultiSelect({ label, products, selectedIds, onChange }) {
+  return (
+    <div>
+      <label className="label">{label}</label>
+      <select
+        multiple
+        className="input h-28"
+        value={selectedIds.map(String)}
+        onChange={(e) => onChange(Array.from(e.target.selectedOptions, (o) => Number(o.value)))}
+      >
+        {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+      </select>
+      {selectedIds.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          {selectedIds.map((id) => {
+            const product = products.find((p) => p.id === id)
+            if (!product) return null
+            return (
+              <span key={id} className="inline-flex items-center gap-1 bg-brand-50 text-brand-700 text-xs font-semibold pl-2 pr-1 py-1 rounded-full">
+                {product.name}
+                <button
+                  type="button"
+                  onClick={() => onChange(selectedIds.filter((x) => x !== id))}
+                  className="w-4 h-4 rounded-full hover:bg-brand-100 flex items-center justify-center"
+                  aria-label={`Remove ${product.name}`}
+                >
+                  <X size={11} />
+                </button>
+              </span>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function OffersPage() {
@@ -17,6 +60,11 @@ export default function OffersPage() {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY_OFFER)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  // Collapsed by default — "buy X get Y" almost always means Y of the same
+  // product you bought, which is already the backend's default when
+  // free_products is empty. Only expand this (and let the admin pick a
+  // different free product) when that's actually what's configured.
+  const [customFreeProducts, setCustomFreeProducts] = useState(false)
 
   function load() {
     setLoading(true)
@@ -31,6 +79,7 @@ export default function OffersPage() {
   function openCreate() {
     setEditing(null)
     setForm(EMPTY_OFFER)
+    setCustomFreeProducts(false)
     setShowForm(true)
   }
 
@@ -59,6 +108,10 @@ export default function OffersPage() {
           }
         : EMPTY_OFFER.amount_discount,
     })
+    // Preserve an existing distinct free-product configuration instead of
+    // hiding it (and silently wiping it on next save) — only offers that
+    // already use it get the override expanded.
+    setCustomFreeProducts(Boolean(offer.buy_x_get_y?.free_products?.length))
     setShowForm(true)
   }
 
@@ -108,10 +161,6 @@ export default function OffersPage() {
     load()
   }
 
-  function multiSelect(list, setList) {
-    return (e) => setList(Array.from(e.target.selectedOptions, (o) => Number(o.value)))
-  }
-
   return (
     <div>
       <div className="page-header">
@@ -147,10 +196,19 @@ export default function OffersPage() {
                   </button>
                 </div>
                 {offer.offer_type === 'buy_x_get_y' && offer.buy_x_get_y && (
-                  <p className="text-sm text-ink-600 mt-2">
-                    Buy {offer.buy_x_get_y.buy_quantity} get {offer.buy_x_get_y.get_quantity} free
-                    ({offer.buy_x_get_y.buy_products.length} eligible product(s))
-                  </p>
+                  <>
+                    <p className="text-sm text-ink-600 mt-2">
+                      Buy {offer.buy_x_get_y.buy_quantity} get {offer.buy_x_get_y.get_quantity} free
+                    </p>
+                    <p className="text-xs text-ink-400 mt-1">
+                      On: {productNames(offer.buy_x_get_y.buy_products, products).join(', ') || '—'}
+                    </p>
+                    {offer.buy_x_get_y.free_products.length > 0 && (
+                      <p className="text-xs text-ink-400">
+                        Free item: {productNames(offer.buy_x_get_y.free_products, products).join(', ')}
+                      </p>
+                    )}
+                  </>
                 )}
                 {offer.offer_type === 'amount_discount' && offer.amount_discount && (
                   <p className="text-sm text-ink-600 mt-2">
@@ -193,7 +251,7 @@ export default function OffersPage() {
           </div>
 
           {form.offer_type === 'buy_x_get_y' && (
-            <div className="border border-sandal-200 rounded-lg p-3 space-y-2">
+            <div className="border border-sandal-200 rounded-lg p-3 space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="label">Buy Qty</label>
@@ -206,19 +264,40 @@ export default function OffersPage() {
                     onChange={(e) => setForm({ ...form, buy_x_get_y: { ...form.buy_x_get_y, get_quantity: e.target.value } })} />
                 </div>
               </div>
-              <div>
-                <label className="label">Eligible "Buy" Products (ctrl/cmd+click to multi-select)</label>
-                <select multiple className="input h-28"
-                  onChange={multiSelect(products, (val) => setForm({ ...form, buy_x_get_y: { ...form.buy_x_get_y, buy_products: val } }))}>
-                  {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="label">Eligible "Free" Products (leave empty = same as bought item)</label>
-                <select multiple className="input h-28"
-                  onChange={multiSelect(products, (val) => setForm({ ...form, buy_x_get_y: { ...form.buy_x_get_y, free_products: val } }))}>
-                  {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
+
+              <ProductMultiSelect
+                label={'Eligible "Buy" Products (ctrl/cmd+click to multi-select)'}
+                products={products}
+                selectedIds={form.buy_x_get_y.buy_products}
+                onChange={(val) => setForm({ ...form, buy_x_get_y: { ...form.buy_x_get_y, buy_products: val } })}
+              />
+
+              <div className="border-t border-sandal-200 pt-3">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={customFreeProducts}
+                    onChange={(e) => {
+                      setCustomFreeProducts(e.target.checked)
+                      if (!e.target.checked) {
+                        setForm({ ...form, buy_x_get_y: { ...form.buy_x_get_y, free_products: [] } })
+                      }
+                    }}
+                  />
+                  <span className="text-xs font-semibold text-ink-700">Give a different free product than what's bought</span>
+                </label>
+                {customFreeProducts ? (
+                  <div className="mt-2">
+                    <ProductMultiSelect
+                      label='Eligible "Free" Products'
+                      products={products}
+                      selectedIds={form.buy_x_get_y.free_products}
+                      onChange={(val) => setForm({ ...form, buy_x_get_y: { ...form.buy_x_get_y, free_products: val } })}
+                    />
+                  </div>
+                ) : (
+                  <p className="text-xs text-ink-400 mt-1">By default, the product being bought is the one that becomes free.</p>
+                )}
               </div>
             </div>
           )}
@@ -243,13 +322,12 @@ export default function OffersPage() {
                 <input type="number" className="input" value={form.amount_discount.discount_value}
                   onChange={(e) => setForm({ ...form, amount_discount: { ...form.amount_discount, discount_value: e.target.value } })} />
               </div>
-              <div>
-                <label className="label">Applicable Products (empty = whole cart)</label>
-                <select multiple className="input h-28"
-                  onChange={multiSelect(products, (val) => setForm({ ...form, amount_discount: { ...form.amount_discount, applicable_products: val } }))}>
-                  {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
-              </div>
+              <ProductMultiSelect
+                label="Applicable Products (empty = whole cart)"
+                products={products}
+                selectedIds={form.amount_discount.applicable_products}
+                onChange={(val) => setForm({ ...form, amount_discount: { ...form.amount_discount, applicable_products: val } })}
+              />
             </div>
           )}
 
