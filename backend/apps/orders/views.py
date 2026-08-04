@@ -90,33 +90,49 @@ def checkout(request):
     if missing:
         return Response({"detail": f"Unknown product ids: {sorted(missing)}"}, status=400)
 
-    cart_items = []
-    for line in data["items"]:
-        product = products[line["product_id"]]
-        if not product.in_stock or product.stock_quantity < line["quantity"]:
-            return Response(
-                {"detail": f"'{product.name}' doesn't have enough stock (requested {line['quantity']}, available {product.stock_quantity})."},
-                status=400,
-            )
-        cart_items.append({"product": product, "quantity": line["quantity"], "unit_price": product.price})
-
-    free_selections = []
-    for line in free_selection_lines:
-        product = products[line["product_id"]]
-        if not product.in_stock or product.stock_quantity < line["quantity"]:
-            return Response(
-                {"detail": f"'{product.name}' doesn't have enough stock to give free (requested {line['quantity']}, available {product.stock_quantity})."},
-                status=400,
-            )
-        free_selections.append({"product": product, "quantity": line["quantity"]})
+    cart_items = [
+        {"product": products[line["product_id"]], "quantity": line["quantity"], "unit_price": products[line["product_id"]].price}
+        for line in data["items"]
+    ]
+    free_selections = [
+        {"product": products[line["product_id"]], "quantity": line["quantity"]}
+        for line in free_selection_lines
+    ]
 
     try:
         offer_result = evaluate_cart_offers(cart_items, free_selections=free_selections)
     except ValueError as e:
         return Response({"detail": str(e)}, status=400)
 
+    # Buy X Get Y can grant a product that was never in the cart or the
+    # customer's free picks (e.g. the offer's free product differs from what
+    # they're buying) — fetch it now so stock can be checked and the order
+    # item can reference it.
+    free_qty_by_product = {}
+    for fl in offer_result["free_lines"]:
+        free_qty_by_product[fl["product_id"]] = free_qty_by_product.get(fl["product_id"], 0) + fl["quantity"]
+    unresolved_ids = set(free_qty_by_product) - set(products.keys())
+    if unresolved_ids:
+        products.update({p.id: p for p in Product.objects.filter(id__in=unresolved_ids)})
+
+    # Every free grant is an ADDITION to the order, never carved out of what's
+    # already in the paid cart — "buy 3 get 1 free" means 3 paid + 1 separate
+    # free unit (4 total), so stock has to cover paid + free combined.
+    total_qty_needed = dict(free_qty_by_product)
+    for ci in cart_items:
+        total_qty_needed[ci["product"].id] = total_qty_needed.get(ci["product"].id, 0) + ci["quantity"]
+
+    for product_id, needed_qty in total_qty_needed.items():
+        product = products[product_id]
+        if not product.in_stock or product.stock_quantity < needed_qty:
+            free_note = " (including free units from an active offer)" if free_qty_by_product.get(product_id) else ""
+            return Response(
+                {"detail": f"'{product.name}' doesn't have enough stock{free_note} (need {needed_qty}, available {product.stock_quantity})."},
+                status=400,
+            )
+
     cart_subtotal = sum((ci["unit_price"] * ci["quantity"] for ci in cart_items), Decimal("0.00"))
-    subtotal = cart_subtotal + offer_result["free_selections_value"]
+    subtotal = cart_subtotal + offer_result["free_value"]
     discount_amount = offer_result["discount_amount"]
     total_amount = subtotal - discount_amount
 
@@ -140,43 +156,24 @@ def checkout(request):
             applied_offers_summary="; ".join(offer_result["applied_summary"]),
         )
 
-        # remaining_free_qty is consumed first against matching units already in
-        # the paid cart (buy-x-get-y style), then whatever's left over becomes
-        # its own standalone free line — that's how a customer's free_products_worth
-        # pick shows up even when it isn't a product they were otherwise buying.
-        remaining_free_qty = {}
-        for fl in offer_result["free_lines"]:
-            remaining_free_qty[fl["product_id"]] = remaining_free_qty.get(fl["product_id"], 0) + fl["quantity"]
-
         for ci in cart_items:
             product = ci["product"]
-            free_qty = min(remaining_free_qty.get(product.id, 0), ci["quantity"])
-            paid_qty = ci["quantity"] - free_qty
-            if paid_qty > 0:
-                OrderItem.objects.create(
-                    order=order, product=product, product_name=product.name,
-                    quantity=paid_qty, unit_price=product.price, is_free_item=False,
-                    subtotal=product.price * paid_qty,
-                )
-            if free_qty > 0:
-                OrderItem.objects.create(
-                    order=order, product=product, product_name=product.name,
-                    quantity=free_qty, unit_price=product.price, is_free_item=True,
-                    subtotal=Decimal("0.00"),
-                )
-                remaining_free_qty[product.id] -= free_qty
-            Product.objects.filter(id=product.id).update(stock_quantity=F("stock_quantity") - ci["quantity"])
+            OrderItem.objects.create(
+                order=order, product=product, product_name=product.name,
+                quantity=ci["quantity"], unit_price=product.price, is_free_item=False,
+                subtotal=product.price * ci["quantity"],
+            )
 
-        for product_id, qty in remaining_free_qty.items():
-            if qty <= 0:
-                continue
+        for product_id, qty in free_qty_by_product.items():
             product = products[product_id]
             OrderItem.objects.create(
                 order=order, product=product, product_name=product.name,
                 quantity=qty, unit_price=product.price, is_free_item=True,
                 subtotal=Decimal("0.00"),
             )
-            Product.objects.filter(id=product_id).update(stock_quantity=F("stock_quantity") - qty)
+
+        for product_id, needed_qty in total_qty_needed.items():
+            Product.objects.filter(id=product_id).update(stock_quantity=F("stock_quantity") - needed_qty)
 
         OrderStatusHistory.objects.create(
             order=order, status_type="fulfillment", status=Order.FulfillmentStatus.RECEIVED,
