@@ -55,7 +55,7 @@ export default function OrdersPage() {
           />
         </div>
         <select className="input w-52" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-          <option value="">All Statuses</option>
+          <option value="">All (excl. Cancelled)</option>
           <option value="received">Received</option>
           <option value="packed">Packed</option>
           <option value="out_for_delivery">Out for Delivery</option>

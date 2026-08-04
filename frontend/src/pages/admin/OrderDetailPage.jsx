@@ -2,16 +2,23 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { OrdersAPI } from '../../api/endpoints'
-import { PageLoader } from '../../components/admin/ui.jsx'
+import { PageLoader, ConfirmDialog } from '../../components/admin/ui.jsx'
 
 const FULFILLMENT_OPTIONS = ['received', 'packed', 'out_for_delivery', 'delivered', 'cancelled']
+// 'received' and 'cancelled' apply regardless of payment; the rest of the
+// fulfillment pipeline only makes sense once the order is actually paid for.
+const FULFILLMENT_INDEPENDENT_OF_PAYMENT = ['received', 'cancelled']
 const PAYMENT_OPTIONS = ['pending', 'paid', 'failed', 'refunded']
+// Status changes with real consequences (reverse a sale, reverse a fulfillment)
+// get a confirmation step instead of applying on a single click.
+const CONFIRM_REQUIRED = { fulfillment: ['cancelled'], payment: ['refunded'] }
 
 export default function OrderDetailPage() {
   const { id } = useParams()
   const [order, setOrder] = useState(null)
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
+  const [confirmAction, setConfirmAction] = useState(null)
 
   function load() {
     OrdersAPI.detail(id).then(({ data }) => setOrder(data))
@@ -30,7 +37,30 @@ export default function OrderDetailPage() {
     }
   }
 
+  function handleStatusClick(statusType, statusValue) {
+    if (CONFIRM_REQUIRED[statusType]?.includes(statusValue)) {
+      setConfirmAction({ statusType, statusValue })
+    } else {
+      updateStatus(statusType, statusValue)
+    }
+  }
+
   if (!order) return <PageLoader />
+
+  const visibleFulfillmentOptions = FULFILLMENT_OPTIONS.filter(
+    (s) => order.payment_status === 'paid' || FULFILLMENT_INDEPENDENT_OF_PAYMENT.includes(s)
+  )
+  const visiblePaymentOptions = PAYMENT_OPTIONS.filter((s) => {
+    if (s !== 'refunded') return true
+    // Refunding only makes sense once money was actually collected AND the
+    // order was cancelled — otherwise there's nothing to refund yet.
+    return order.has_paid_transaction && order.current_status === 'cancelled'
+  })
+  const confirmCopy = confirmAction && (
+    confirmAction.statusType === 'fulfillment'
+      ? { title: 'Cancel this order?', message: 'This marks the order as cancelled. This can\'t be automatically undone.' }
+      : { title: 'Mark payment as refunded?', message: 'This records a refund expense in Finance for this order\'s amount. This can\'t be automatically undone.' }
+  )
 
   return (
     <div className="max-w-4xl">
@@ -95,11 +125,11 @@ export default function OrderDetailPage() {
         <div className="card p-4">
           <h2 className="section-title">Order Status</h2>
           <div className="flex flex-wrap gap-2">
-            {FULFILLMENT_OPTIONS.map((s) => (
+            {visibleFulfillmentOptions.map((s) => (
               <button
                 key={s}
                 disabled={saving}
-                onClick={() => updateStatus('fulfillment', s)}
+                onClick={() => handleStatusClick('fulfillment', s)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize border transition-colors ${
                   order.current_status === s ? 'bg-brand-500 text-white border-brand-500' : 'bg-white border-sandal-300 text-ink-700 hover:bg-sandal-100'
                 }`}
@@ -108,15 +138,18 @@ export default function OrderDetailPage() {
               </button>
             ))}
           </div>
+          {order.payment_status !== 'paid' && (
+            <p className="text-xs text-ink-400 mt-2">Packed / Out for Delivery / Delivered unlock once payment is marked Paid.</p>
+          )}
         </div>
         <div className="card p-4">
           <h2 className="section-title">Payment Status</h2>
           <div className="flex flex-wrap gap-2">
-            {PAYMENT_OPTIONS.map((s) => (
+            {visiblePaymentOptions.map((s) => (
               <button
                 key={s}
                 disabled={saving}
-                onClick={() => updateStatus('payment', s)}
+                onClick={() => handleStatusClick('payment', s)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize border transition-colors ${
                   order.payment_status === s ? 'bg-brand-500 text-white border-brand-500' : 'bg-white border-sandal-300 text-ink-700 hover:bg-sandal-100'
                 }`}
@@ -127,6 +160,15 @@ export default function OrderDetailPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!confirmAction}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={() => confirmAction && updateStatus(confirmAction.statusType, confirmAction.statusValue)}
+        title={confirmCopy?.title}
+        message={confirmCopy?.message}
+        danger
+      />
 
       <div className="card p-4 mb-6">
         <label className="text-sm font-semibold text-ink-700">Note for next status change (optional)</label>

@@ -5,6 +5,7 @@ import {
 } from 'recharts'
 import {
   ChevronLeft, ChevronRight, Download, Plus, TrendingUp, TrendingDown, PiggyBank, Percent,
+  ShoppingBag, Clock3,
 } from 'lucide-react'
 import { FinanceAPI } from '../../api/endpoints'
 import StatCard from '../../components/admin/StatCard.jsx'
@@ -179,8 +180,10 @@ export default function FinancePage() {
       </div>
 
       {summary && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <StatCard label="Income" value={`₹${Number(summary.income).toLocaleString('en-IN')}`} icon={TrendingUp} accent="green" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <StatCard label="Orders Value" value={`₹${Number(summary.orders_value).toLocaleString('en-IN')}`} icon={ShoppingBag} accent="ink" />
+          <StatCard label="Income Collected" value={`₹${Number(summary.income).toLocaleString('en-IN')}`} icon={TrendingUp} accent="green" />
+          <StatCard label="Pending Collection" value={`₹${Number(summary.pending_collection).toLocaleString('en-IN')}`} icon={Clock3} accent="gold" />
           <StatCard label="Expense" value={`₹${Number(summary.expense).toLocaleString('en-IN')}`} icon={TrendingDown} accent="brand" />
           <StatCard label="Savings" value={`₹${Number(summary.savings).toLocaleString('en-IN')}`} icon={PiggyBank} accent="ink" />
           <StatCard label="Savings Rate" value={`${savingsRate}%`} icon={Percent} accent="gold" />

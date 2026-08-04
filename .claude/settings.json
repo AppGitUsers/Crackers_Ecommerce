@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./venv/Scripts/python.exe -c ' *)",
+      "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/test_order_detail.py\")",
+      "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/test_orders_list.py\")"
+    ]
+  }
+}

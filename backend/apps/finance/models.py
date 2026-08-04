@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 
 
 class Transaction(models.Model):
@@ -18,6 +19,7 @@ class Transaction(models.Model):
         DELIVERY = "delivery", "Delivery / Logistics"
         MARKETING = "marketing", "Marketing"
         SALARY = "salary", "Salary / Staff"
+        REFUND = "refund", "Refund"
         MISC = "misc", "Miscellaneous"
 
     transaction_type = models.CharField(max_length=10, choices=TransactionType.choices)
@@ -33,6 +35,22 @@ class Transaction(models.Model):
 
     class Meta:
         ordering = ["-date", "-created_at"]
+        constraints = [
+            # One auto-generated income row per order (the "paid" hook,
+            # get_or_create'd) — a DB constraint so no code path, present or
+            # future, can accidentally double up an order's income entry.
+            models.UniqueConstraint(
+                fields=["related_order"],
+                condition=Q(transaction_type="income"),
+                name="unique_income_transaction_per_order",
+            ),
+            # One refund entry per order, same reasoning.
+            models.UniqueConstraint(
+                fields=["related_order"],
+                condition=Q(category="refund"),
+                name="unique_refund_transaction_per_order",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.transaction_type} · ₹{self.amount} · {self.date}"

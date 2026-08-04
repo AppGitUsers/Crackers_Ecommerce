@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 
 from django.db import transaction
@@ -10,6 +11,7 @@ from rest_framework.response import Response
 
 from apps.accounts.permissions import IsAdminCRMUser
 from apps.customers.models import Customer
+from apps.finance.models import Transaction as FinanceTransaction
 from apps.products.models import Product
 from apps.offers.services import evaluate_cart_offers
 
@@ -30,6 +32,15 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_fields = ["current_status", "payment_status"]
     search_fields = ["order_number", "customer__name", "customer__phone"]
     ordering_fields = ["created_at", "total_amount"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        # Cancelled orders clutter the default list — hide them unless the
+        # admin explicitly filters for current_status=cancelled (still
+        # reachable directly, e.g. via the order detail link).
+        if self.action == "list" and not self.request.query_params.get("current_status"):
+            qs = qs.exclude(current_status=Order.FulfillmentStatus.CANCELLED)
+        return qs
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -66,6 +77,37 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
                 order=order, status_type=status_type, status=new_status,
                 note=note, changed_by=request.user,
             )
+
+            if status_type == "payment" and new_status == Order.PaymentStatus.PAID:
+                # get_or_create keyed the same way as the DB unique constraint
+                # (related_order + transaction_type=income) — re-marking an
+                # order "paid" never creates a second income row.
+                FinanceTransaction.objects.get_or_create(
+                    related_order=order,
+                    transaction_type=FinanceTransaction.TransactionType.INCOME,
+                    defaults={
+                        "category": FinanceTransaction.Category.MANUAL_PAYMENT,
+                        "amount": order.total_amount,
+                        "description": f"Order {order.order_number}",
+                        "date": date.today(),
+                        "recorded_by": request.user,
+                    },
+                )
+            elif status_type == "payment" and new_status == Order.PaymentStatus.REFUNDED:
+                # The original income row is left untouched (it's history —
+                # the order really was paid). The refund is its own expense
+                # entry so past periods never get silently rewritten.
+                FinanceTransaction.objects.get_or_create(
+                    related_order=order,
+                    category=FinanceTransaction.Category.REFUND,
+                    defaults={
+                        "transaction_type": FinanceTransaction.TransactionType.EXPENSE,
+                        "amount": order.total_amount,
+                        "description": f"Refund for order {order.order_number}",
+                        "date": date.today(),
+                        "recorded_by": request.user,
+                    },
+                )
         return Response(OrderDetailSerializer(order, context={"request": request}).data)
 
 

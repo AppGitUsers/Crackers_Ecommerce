@@ -10,6 +10,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font
 
 from apps.accounts.permissions import IsAdminCRMUser
+from apps.orders.models import Order
 from .models import Transaction
 from .serializers import TransactionSerializer
 
@@ -47,11 +48,32 @@ def finance_summary(request):
         qs.values("transaction_type", "category").annotate(total=Sum("amount")).order_by("-total")
     )
 
+    # Orders placed (excluding cancelled) vs. income actually collected —
+    # the gap is what's still owed, since income only grows once an order
+    # is marked paid.
+    orders_qs = Order.objects.exclude(current_status=Order.FulfillmentStatus.CANCELLED)
+    if date_from:
+        orders_qs = orders_qs.filter(created_at__date__gte=date_from)
+    if date_to:
+        orders_qs = orders_qs.filter(created_at__date__lte=date_to)
+    orders_value = orders_qs.aggregate(total=Sum("total_amount"))["total"] or 0
+
+    # Compare against income tied to that SAME set of orders, not all income
+    # in the range — a cancelled+refunded order drops out of orders_value but
+    # its (still-legitimate, kept-for-history) income row doesn't disappear,
+    # so comparing against total income would understate what's still owed.
+    income_for_orders = Transaction.objects.filter(
+        transaction_type=Transaction.TransactionType.INCOME, related_order__in=orders_qs,
+    ).aggregate(total=Sum("amount"))["total"] or 0
+    pending_collection = max(orders_value - income_for_orders, 0)
+
     return Response({
         "income": income,
         "expense": expense,
         "savings": income - expense,
         "by_category": by_category,
+        "orders_value": orders_value,
+        "pending_collection": pending_collection,
     })
 
 

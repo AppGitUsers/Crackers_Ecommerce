@@ -37,6 +37,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     customer = CustomerSerializer(read_only=True)
     items = OrderItemSerializer(many=True, read_only=True)
     status_history = OrderStatusHistorySerializer(many=True, read_only=True)
+    has_paid_transaction = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
@@ -44,8 +45,14 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             "id", "order_number", "customer", "items", "status_history",
             "current_status", "payment_status", "subtotal_amount", "discount_amount",
             "total_amount", "delivery_address", "applied_offers_summary", "admin_notes",
-            "created_at", "updated_at",
+            "created_at", "updated_at", "has_paid_transaction",
         ]
+
+    def get_has_paid_transaction(self, obj):
+        # Whether this order actually has an income row in the Finance table —
+        # the admin UI uses this to decide whether "Refunded" is even a
+        # meaningful option (only makes sense if money was actually collected).
+        return obj.transactions.filter(transaction_type="income").exists()
 
 
 class CheckoutItemSerializer(serializers.Serializer):
