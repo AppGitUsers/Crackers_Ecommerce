@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { Gift, ArrowLeft } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 import { OrdersAPI, OffersAPI, ProductsAPI } from '../../api/endpoints'
+import { getUnlockedOffers } from '../../utils/offers'
 
 export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart()
@@ -29,6 +30,18 @@ export default function CheckoutPage() {
       .filter((o) => subtotal >= Number(o.amount_discount.min_purchase_amount))
       .reduce((sum, o) => sum + Number(o.amount_discount.discount_value), 0)
   }, [offers, subtotal])
+
+  // flat_discount offers actually reduce what's charged — CartPage already
+  // promises "₹X OFF will be applied at checkout" for these, so the total
+  // shown here has to reflect it too, not just the free-products picker.
+  const flatDiscount = useMemo(() => {
+    const unlocked = getUnlockedOffers(items, offers, products)
+    return unlocked
+      .filter((u) => u.type === 'flat_discount')
+      .reduce((sum, u) => sum + u.value, 0)
+  }, [items, offers, products])
+
+  const total = Math.max(0, subtotal - flatDiscount)
 
   const productsById = useMemo(() => Object.fromEntries(products.map((p) => [p.id, p])), [products])
   const eligibleProducts = useMemo(() => products.filter((p) => p.in_stock), [products])
@@ -97,7 +110,7 @@ export default function CheckoutPage() {
       <h1 className="text-xl font-extrabold text-ink-900">Checkout</h1>
 
       {freeBudget > 0 && (
-        <div className="card p-5">
+        <div className="card p-5 animate-fade-in-up">
           <div className="flex items-center gap-2 mb-1">
             <Gift size={18} className="text-brand-600" />
             <h2 className="font-bold text-ink-900">Pick Your Free Products</h2>
@@ -122,7 +135,7 @@ export default function CheckoutPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     {sel > 0 && (
                       <>
-                        <button type="button" onClick={() => decFree(p)} className="w-7 h-7 rounded-lg border border-sandal-300 font-bold text-brand-600 hover:bg-sandal-100">−</button>
+                        <button type="button" onClick={() => decFree(p)} className="w-7 h-7 rounded-lg border border-sandal-300 font-bold text-brand-600 hover:bg-sandal-100 active:scale-90 transition-transform">−</button>
                         <span className="w-5 text-center text-sm font-semibold text-ink-900">{sel}</span>
                       </>
                     )}
@@ -130,7 +143,7 @@ export default function CheckoutPage() {
                       type="button"
                       disabled={wouldExceed}
                       onClick={() => incFree(p)}
-                      className="w-7 h-7 rounded-lg border border-sandal-300 font-bold text-brand-600 hover:bg-sandal-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="w-7 h-7 rounded-lg border border-sandal-300 font-bold text-brand-600 hover:bg-sandal-100 active:scale-90 transition-transform disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100"
                     >
                       +
                     </button>
@@ -172,15 +185,21 @@ export default function CheckoutPage() {
             <span className="font-semibold text-ink-700">Subtotal</span>
             <span className="text-ink-900">₹{subtotal.toFixed(2)}</span>
           </div>
+          {flatDiscount > 0 && (
+            <div className="flex items-center justify-between text-green-600 text-sm">
+              <span>Offer discount</span>
+              <span>−₹{flatDiscount.toFixed(2)}</span>
+            </div>
+          )}
           {selectedValue > 0 && (
             <div className="flex items-center justify-between text-green-600 text-sm">
               <span>Free products</span>
-              <span>₹{selectedValue.toFixed(2)}</span>
+              <span>₹{selectedValue.toFixed(2)} <span className="text-ink-400">(free)</span></span>
             </div>
           )}
           <div className="flex items-center justify-between pt-1">
             <span className="font-bold text-ink-900">Total</span>
-            <span className="text-xl font-extrabold text-ink-900">₹{subtotal.toFixed(2)}</span>
+            <span className="text-xl font-extrabold text-ink-900">₹{total.toFixed(2)}</span>
           </div>
         </div>
 

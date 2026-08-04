@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Gift, Tag, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, Gift, Tag, CheckCircle2, ImageOff } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 import { OffersAPI, ProductsAPI } from '../../api/endpoints'
 import { getUnlockedOffers, describeUnlockedOffer } from '../../utils/offers'
@@ -53,7 +53,7 @@ export default function CartPage() {
       <h1 className="text-xl font-extrabold text-ink-900 mb-4">Your Cart</h1>
 
       {unlockedOffers.length > 0 && (
-        <div className="card p-4 mb-4 border-2 border-brand-200 bg-brand-50/50">
+        <div className="card p-4 mb-4 border-2 border-brand-200 bg-brand-50/50 animate-fade-in-up">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle2 size={18} className="text-brand-600" />
             <h2 className="font-bold text-ink-900">Offer{unlockedOffers.length > 1 ? 's' : ''} Unlocked!</h2>
@@ -80,17 +80,21 @@ export default function CartPage() {
       <div className="card divide-y divide-sandal-200">
         {items.map((item) => (
           <div key={item.product_id} className="flex items-center gap-3 p-4">
-            <div className="w-14 h-14 bg-sandal-100 rounded-lg flex items-center justify-center text-2xl shrink-0">
-              {item.image ? <img src={item.image} className="w-full h-full object-cover rounded-lg" /> : '🎇'}
+            <div className="w-14 h-14 rounded-lg overflow-hidden flex items-center justify-center shrink-0 ring-1 ring-black/5 bg-gradient-to-br from-sandal-50 to-sandal-100">
+              {item.image ? (
+                <img src={item.image} className="w-full h-full object-cover" />
+              ) : (
+                <ImageOff size={18} className="text-sandal-400" strokeWidth={1.5} />
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold truncate text-ink-900">{item.name}</p>
               <p className="text-sm text-ink-500">₹{item.price} / {item.unit_label}</p>
             </div>
             <div className="flex items-center border border-sandal-300 rounded-lg overflow-hidden">
-              <button className="w-8 h-8 font-bold hover:bg-sandal-100" onClick={() => setQuantity(item.product_id, item.quantity - 1)}>−</button>
+              <button className="w-8 h-8 font-bold hover:bg-sandal-100 active:scale-90 transition-transform" onClick={() => setQuantity(item.product_id, item.quantity - 1)}>−</button>
               <span className="w-8 text-center font-semibold text-ink-900">{item.quantity}</span>
-              <button className="w-8 h-8 font-bold hover:bg-sandal-100" onClick={() => setQuantity(item.product_id, item.quantity + 1)}>+</button>
+              <button className="w-8 h-8 font-bold hover:bg-sandal-100 active:scale-90 transition-transform" onClick={() => setQuantity(item.product_id, item.quantity + 1)}>+</button>
             </div>
             <button className="text-brand-600 text-sm font-semibold hover:text-brand-700" onClick={() => removeItem(item.product_id)}>Remove</button>
           </div>

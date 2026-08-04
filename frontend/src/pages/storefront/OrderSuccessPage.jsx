@@ -1,4 +1,5 @@
 import { Link, useLocation, useParams } from 'react-router-dom'
+import { PartyPopper } from 'lucide-react'
 
 export default function OrderSuccessPage() {
   const { orderNumber } = useParams()
@@ -6,8 +7,10 @@ export default function OrderSuccessPage() {
   const order = location.state?.order
 
   return (
-    <div className="max-w-lg mx-auto text-center py-10">
-      <div className="text-5xl mb-3">🎉</div>
+    <div className="max-w-lg mx-auto text-center py-10 animate-fade-in-up">
+      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center mx-auto mb-4">
+        <PartyPopper size={28} className="text-white" />
+      </div>
       <h1 className="text-2xl font-extrabold text-ink-900">Order Placed!</h1>
       <p className="text-ink-600 mt-2">
         Your order <span className="font-bold text-ink-900">{orderNumber}</span> has been received.

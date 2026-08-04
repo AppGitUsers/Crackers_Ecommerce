@@ -1,3 +1,4 @@
+import { ImageOff } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 
 export default function ProductCard({ product }) {
@@ -7,12 +8,16 @@ export default function ProductCard({ product }) {
   const inCartQty = cartLine?.quantity || 0
 
   return (
-    <div className="card p-4 flex flex-col hover:shadow-lg transition-shadow">
-      <div className="aspect-square bg-sandal-100 rounded-lg overflow-hidden mb-3 flex items-center justify-center">
+    <div className="group card p-4 flex flex-col transition-all duration-300 hover:shadow-elevated hover:-translate-y-0.5">
+      <div className="aspect-square rounded-lg overflow-hidden mb-3 flex items-center justify-center ring-1 ring-black/5 bg-gradient-to-br from-sandal-50 to-sandal-100">
         {product.primary_image ? (
-          <img src={product.primary_image} alt={product.name} className="w-full h-full object-cover" />
+          <img
+            src={product.primary_image}
+            alt={product.name}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
         ) : (
-          <span className="text-4xl">🎇</span>
+          <ImageOff size={28} className="text-sandal-400" strokeWidth={1.5} />
         )}
       </div>
       <h3 className="font-semibold text-ink-900 leading-snug">{product.name}</h3>
@@ -28,14 +33,14 @@ export default function ProductCard({ product }) {
       ) : inCartQty > 0 ? (
         <div className="flex items-center justify-between mt-3 border border-sandal-300 rounded-lg overflow-hidden">
           <button
-            className="w-9 h-9 font-bold text-brand-600 hover:bg-sandal-100"
+            className="w-9 h-9 font-bold text-brand-600 hover:bg-sandal-100 active:scale-90 transition-transform"
             onClick={() => setQuantity(product.id, inCartQty - 1)}
           >
             −
           </button>
           <span className="font-semibold text-ink-900">{inCartQty}</span>
           <button
-            className="w-9 h-9 font-bold text-brand-600 hover:bg-sandal-100"
+            className="w-9 h-9 font-bold text-brand-600 hover:bg-sandal-100 active:scale-90 transition-transform"
             onClick={() => setQuantity(product.id, inCartQty + 1)}
           >
             +

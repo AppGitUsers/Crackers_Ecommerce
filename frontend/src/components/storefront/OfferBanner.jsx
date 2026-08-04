@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Sparkles, ChevronLeft, ChevronRight } from 'lucide-react'
 
 function offerMechanicText(offer) {
   if (offer.offer_type === 'buy_x_get_y' && offer.buy_x_get_y) {
@@ -39,7 +40,10 @@ function Slide({ offer }) {
         }`}
       />
       <div className="relative h-full max-w-6xl mx-auto px-14 sm:px-16 flex flex-col justify-center text-white">
-        <span className="text-gold-400 text-xs font-bold uppercase tracking-widest mb-1">✨ Limited Time Offer</span>
+        <span className="text-gold-400 text-xs font-bold uppercase tracking-widest mb-1 flex items-center gap-1.5">
+          <Sparkles size={12} />
+          Limited Time Offer
+        </span>
         <h2 className="text-xl sm:text-3xl font-extrabold leading-tight">{offer.name}</h2>
         <p className="text-sm sm:text-base text-sandal-100 mt-1 max-w-md">
           {offer.description || offerMechanicText(offer)}
@@ -125,16 +129,16 @@ export default function OfferBanner({ offers }) {
       <button
         onClick={goPrev}
         aria-label="Previous offer"
-        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center text-xl leading-none transition-colors z-10"
+        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all active:scale-90 z-10"
       >
-        ‹
+        <ChevronLeft size={18} />
       </button>
       <button
         onClick={goNext}
         aria-label="Next offer"
-        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center text-xl leading-none transition-colors z-10"
+        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all active:scale-90 z-10"
       >
-        ›
+        <ChevronRight size={18} />
       </button>
     </div>
   )

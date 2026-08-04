@@ -7,15 +7,20 @@ body {
 }
 
 .btn-primary {
-  @apply bg-brand-500 hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply bg-brand-500 hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100;
 }
 
 .btn-secondary {
-  @apply bg-white hover:bg-sandal-100 text-ink-800 font-semibold px-4 py-2 rounded-lg border border-sandal-300 transition-colors;
+  @apply bg-white hover:bg-sandal-100 text-ink-800 font-semibold px-4 py-2 rounded-lg border border-sandal-300 transition-all active:scale-95;
 }
 
 .card {
   @apply bg-white rounded-xl shadow-card border border-sandal-200;
+}
+
+/* Loading placeholder for image/text blocks (skeleton screens) */
+.skeleton {
+  @apply bg-sandal-100 animate-pulse rounded-lg;
 }
 
 .input {

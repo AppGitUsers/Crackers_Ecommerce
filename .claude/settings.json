@@ -4,7 +4,13 @@
       "Bash(./venv/Scripts/python.exe -c ' *)",
       "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/test_order_detail.py\")",
       "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/test_orders_list.py\")",
-      "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/test_pagination.py\")"
+      "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/test_pagination.py\")",
+      "Bash(curl -s \"http://localhost:8000/api/products/?page_size=100\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); rows = d.get\\('results', d\\); [print\\(p['id'], p['name'], p['price'], p['stock_quantity']\\) for p in rows]\")",
+      "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_premium.js\" \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/shots/\"*.png *)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\HP-PC\\AppData\\Local\\Temp\\claude\\d--Projects-crackers-ecommerce\\e843e00f-8d54-4843-b3a1-79a32bd0142a\\scratchpad\\pw\\shots"
     ]
   }
 }

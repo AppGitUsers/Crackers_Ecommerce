@@ -51,6 +51,16 @@ export default {
       },
       boxShadow: {
         card: "0 2px 10px rgba(26, 26, 26, 0.07)",
+        elevated: "0 12px 28px rgba(26, 26, 26, 0.14)",
+      },
+      keyframes: {
+        fadeInUp: {
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+      },
+      animation: {
+        "fade-in-up": "fadeInUp 0.35s ease-out both",
       },
     },
   },
