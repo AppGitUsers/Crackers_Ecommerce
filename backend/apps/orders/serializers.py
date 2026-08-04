@@ -61,6 +61,10 @@ class CheckoutSerializer(serializers.Serializer):
     city = serializers.CharField(max_length=100, required=False, allow_blank=True)
     pincode = serializers.CharField(max_length=10, required=False, allow_blank=True)
     items = CheckoutItemSerializer(many=True)
+    # Products the customer picked to redeem an active "spend ₹X, get ₹Y worth
+    # of products free" offer — validated against that offer's ₹ budget in the
+    # checkout view (see apps.offers.services.evaluate_cart_offers).
+    free_product_selections = CheckoutItemSerializer(many=True, required=False, default=list)
 
 
 class MyOrdersLookupSerializer(serializers.Serializer):

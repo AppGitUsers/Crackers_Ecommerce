@@ -80,11 +80,13 @@ def checkout(request):
     serializer = CheckoutSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     data = serializer.validated_data
+    free_selection_lines = data.get("free_product_selections") or []
 
     product_ids = [i["product_id"] for i in data["items"]]
-    products = {p.id: p for p in Product.objects.filter(id__in=product_ids)}
+    free_product_ids = [i["product_id"] for i in free_selection_lines]
+    products = {p.id: p for p in Product.objects.filter(id__in=set(product_ids) | set(free_product_ids))}
 
-    missing = set(product_ids) - set(products.keys())
+    missing = (set(product_ids) | set(free_product_ids)) - set(products.keys())
     if missing:
         return Response({"detail": f"Unknown product ids: {sorted(missing)}"}, status=400)
 
@@ -98,8 +100,23 @@ def checkout(request):
             )
         cart_items.append({"product": product, "quantity": line["quantity"], "unit_price": product.price})
 
-    subtotal = sum((ci["unit_price"] * ci["quantity"] for ci in cart_items), Decimal("0.00"))
-    offer_result = evaluate_cart_offers(cart_items)
+    free_selections = []
+    for line in free_selection_lines:
+        product = products[line["product_id"]]
+        if not product.in_stock or product.stock_quantity < line["quantity"]:
+            return Response(
+                {"detail": f"'{product.name}' doesn't have enough stock to give free (requested {line['quantity']}, available {product.stock_quantity})."},
+                status=400,
+            )
+        free_selections.append({"product": product, "quantity": line["quantity"]})
+
+    try:
+        offer_result = evaluate_cart_offers(cart_items, free_selections=free_selections)
+    except ValueError as e:
+        return Response({"detail": str(e)}, status=400)
+
+    cart_subtotal = sum((ci["unit_price"] * ci["quantity"] for ci in cart_items), Decimal("0.00"))
+    subtotal = cart_subtotal + offer_result["free_selections_value"]
     discount_amount = offer_result["discount_amount"]
     total_amount = subtotal - discount_amount
 
@@ -123,13 +140,17 @@ def checkout(request):
             applied_offers_summary="; ".join(offer_result["applied_summary"]),
         )
 
-        free_qty_by_product = {}
+        # remaining_free_qty is consumed first against matching units already in
+        # the paid cart (buy-x-get-y style), then whatever's left over becomes
+        # its own standalone free line — that's how a customer's free_products_worth
+        # pick shows up even when it isn't a product they were otherwise buying.
+        remaining_free_qty = {}
         for fl in offer_result["free_lines"]:
-            free_qty_by_product[fl["product_id"]] = free_qty_by_product.get(fl["product_id"], 0) + fl["quantity"]
+            remaining_free_qty[fl["product_id"]] = remaining_free_qty.get(fl["product_id"], 0) + fl["quantity"]
 
         for ci in cart_items:
             product = ci["product"]
-            free_qty = min(free_qty_by_product.get(product.id, 0), ci["quantity"])
+            free_qty = min(remaining_free_qty.get(product.id, 0), ci["quantity"])
             paid_qty = ci["quantity"] - free_qty
             if paid_qty > 0:
                 OrderItem.objects.create(
@@ -143,7 +164,19 @@ def checkout(request):
                     quantity=free_qty, unit_price=product.price, is_free_item=True,
                     subtotal=Decimal("0.00"),
                 )
+                remaining_free_qty[product.id] -= free_qty
             Product.objects.filter(id=product.id).update(stock_quantity=F("stock_quantity") - ci["quantity"])
+
+        for product_id, qty in remaining_free_qty.items():
+            if qty <= 0:
+                continue
+            product = products[product_id]
+            OrderItem.objects.create(
+                order=order, product=product, product_name=product.name,
+                quantity=qty, unit_price=product.price, is_free_item=True,
+                subtotal=Decimal("0.00"),
+            )
+            Product.objects.filter(id=product_id).update(stock_quantity=F("stock_quantity") - qty)
 
         OrderStatusHistory.objects.create(
             order=order, status_type="fulfillment", status=Order.FulfillmentStatus.RECEIVED,
