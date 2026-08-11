@@ -23,6 +23,16 @@ body {
   @apply bg-sandal-100 animate-pulse rounded-lg;
 }
 
+/* Horizontal scroll strips (carousels) — keeps the native scroll behavior
+   (touch/trackpad/drag) but hides the scrollbar chrome for a cleaner look. */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 .input {
   @apply w-full border border-sandal-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white text-ink-900;
 }

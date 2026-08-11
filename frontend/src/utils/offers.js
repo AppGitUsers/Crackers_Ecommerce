@@ -56,6 +56,21 @@ export function getUnlockedOffers(items, offers, products) {
   return unlocked
 }
 
+// One-line summary of an offer's mechanics from its raw definition (not tied
+// to a cart) — used for the banner slide and the homepage offers strip.
+export function offerMechanicText(offer) {
+  if (offer.offer_type === 'buy_x_get_y' && offer.buy_x_get_y) {
+    const { buy_quantity, get_quantity } = offer.buy_x_get_y
+    return `Buy ${buy_quantity} Get ${get_quantity} Free`
+  }
+  if (offer.offer_type === 'amount_discount' && offer.amount_discount) {
+    const { min_purchase_amount, discount_type, discount_value } = offer.amount_discount
+    const suffix = discount_type === 'flat_discount' ? 'OFF' : 'worth of products FREE'
+    return `Buy for ₹${min_purchase_amount}, get ₹${discount_value} ${suffix}`
+  }
+  return ''
+}
+
 export function describeUnlockedOffer(u) {
   if (u.type === 'buy_x_get_y') {
     return `${u.freeQty} × ${u.freeProductName} will be added free at checkout.`

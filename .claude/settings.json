@@ -19,10 +19,27 @@
       "Bash(export NODE_PATH=\"C:\\\\Users\\\\HP-PC\\\\AppData\\\\Local\\\\npm-cache/_npx/db89d7302a373f10/node_modules\")",
       "Bash(node -e \"require\\('playwright'\\); console.log\\('playwright resolvable OK'\\)\")",
       "Bash(node \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_arrows.js\")",
-      "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_arrows.js\" \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/shots/\"*.png *)"
+      "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_arrows.js\" \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/shots/\"*.png *)",
+      "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_scroll_depth.js\" \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/shots/\"*.png *)",
+      "Bash(node \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_bottom2.js\")",
+      "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_bottom\"*.js \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/shots/\"*.png *)",
+      "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_img_boxes.js\" \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/shots/\"*.png *)",
+      "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_real_images.js\" \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/shots/\"*.png *)",
+      "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_align.js\" \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/shots/\"*.png *)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); rows=d.get\\('results',d\\); [print\\(c['name'], '-> image:', c.get\\('image'\\)\\) for c in rows]\")",
+      "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_category_carousel\"*.js \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/shots/\"*.png *)",
+      "Bash(curl -s \"http://localhost:5173/src/index.css\")",
+      "Bash(curl -s \"http://localhost:5173/\")",
+      "Bash(pkill -f \"vite preview\")",
+      "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/\"*ticker*.js \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/shots/\"*.png)",
+      "Bash(curl -s -o /dev/null -w \"dev-server:%{http_code}\\\\n\" http://localhost:5173/)",
+      "Bash(sed -i 's|http://localhost:4180/|http://localhost:5173/|g' \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_all_card.js\")",
+      "Bash(node \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_all_card.js\")",
+      "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_all_card.js\" \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/debug_preview.js\" \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/shots/\"*.png *)"
     ],
     "additionalDirectories": [
-      "C:\\Users\\HP-PC\\AppData\\Local\\Temp\\claude\\d--Projects-crackers-ecommerce\\e843e00f-8d54-4843-b3a1-79a32bd0142a\\scratchpad\\pw\\shots"
+      "C:\\Users\\HP-PC\\AppData\\Local\\Temp\\claude\\d--Projects-crackers-ecommerce\\e843e00f-8d54-4843-b3a1-79a32bd0142a\\scratchpad\\pw\\shots",
+      "C:\\Users\\HP-PC\\AppData\\Local\\Temp\\claude\\d--Projects-crackers-ecommerce\\e843e00f-8d54-4843-b3a1-79a32bd0142a\\scratchpad\\pw"
     ]
   }
 }
