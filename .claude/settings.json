@@ -13,7 +13,13 @@
       "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_wide.js\" \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/shots/\"*.png *)",
       "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_redblack_sky.js\" \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/shots/\"*.png *)",
       "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_wave_button.js\" \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/shots/\"*.png *)",
-      "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_full_add_btn.js\" \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/shots/\"*.png *)"
+      "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_full_add_btn.js\" \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/shots/\"*.png *)",
+      "Bash(find / -maxdepth 6 -iname \"playwright\" -type d 2>/dev/null | grep -v \"Cache\\\\|cache\" | head -20)",
+      "Read(//d//**)",
+      "Bash(export NODE_PATH=\"C:\\\\Users\\\\HP-PC\\\\AppData\\\\Local\\\\npm-cache/_npx/db89d7302a373f10/node_modules\")",
+      "Bash(node -e \"require\\('playwright'\\); console.log\\('playwright resolvable OK'\\)\")",
+      "Bash(node \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_arrows.js\")",
+      "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_arrows.js\" \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/shots/\"*.png *)"
     ],
     "additionalDirectories": [
       "C:\\Users\\HP-PC\\AppData\\Local\\Temp\\claude\\d--Projects-crackers-ecommerce\\e843e00f-8d54-4843-b3a1-79a32bd0142a\\scratchpad\\pw\\shots"

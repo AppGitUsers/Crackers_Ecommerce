@@ -129,16 +129,16 @@ export default function OfferBanner({ offers }) {
       <button
         onClick={goPrev}
         aria-label="Previous offer"
-        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all active:scale-90 z-10"
+        className="absolute left-1 sm:left-3 top-1/2 -translate-y-1/2 flex items-center justify-center text-white/80 hover:text-white transition-all active:scale-90 z-10"
       >
-        <ChevronLeft size={18} />
+        <ChevronLeft size={30} strokeWidth={1.5} className="scale-y-150 drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]" />
       </button>
       <button
         onClick={goNext}
         aria-label="Next offer"
-        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all active:scale-90 z-10"
+        className="absolute right-1 sm:right-3 top-1/2 -translate-y-1/2 flex items-center justify-center text-white/80 hover:text-white transition-all active:scale-90 z-10"
       >
-        <ChevronRight size={18} />
+        <ChevronRight size={30} strokeWidth={1.5} className="scale-y-150 drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]" />
       </button>
     </div>
   )
