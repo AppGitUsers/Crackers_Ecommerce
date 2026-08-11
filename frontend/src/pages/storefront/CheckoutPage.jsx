@@ -69,7 +69,7 @@ export default function CheckoutPage() {
     return (
       <div className="text-center py-20">
         <p className="text-ink-600 mb-4">Your cart is empty.</p>
-        <Link to="/" className="btn-primary">Browse products</Link>
+        <Link to="/" className="btn-primary rounded-full">Browse products</Link>
       </div>
     )
   }
@@ -135,7 +135,7 @@ export default function CheckoutPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     {sel > 0 && (
                       <>
-                        <button type="button" onClick={() => decFree(p)} className="w-7 h-7 rounded-lg border border-sandal-300 font-bold text-brand-600 hover:bg-sandal-100 active:scale-90 transition-transform">−</button>
+                        <button type="button" onClick={() => decFree(p)} className="w-7 h-7 rounded-full border border-sandal-300 font-bold text-brand-600 hover:bg-sandal-100 active:scale-90 transition-transform">−</button>
                         <span className="w-5 text-center text-sm font-semibold text-ink-900">{sel}</span>
                       </>
                     )}
@@ -143,7 +143,7 @@ export default function CheckoutPage() {
                       type="button"
                       disabled={wouldExceed}
                       onClick={() => incFree(p)}
-                      className="w-7 h-7 rounded-lg border border-sandal-300 font-bold text-brand-600 hover:bg-sandal-100 active:scale-90 transition-transform disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100"
+                      className="w-7 h-7 rounded-full border border-sandal-300 font-bold text-brand-600 hover:bg-sandal-100 active:scale-90 transition-transform disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100"
                     >
                       +
                     </button>
@@ -205,7 +205,7 @@ export default function CheckoutPage() {
 
         {error && <p className="text-brand-600 text-sm font-semibold">{error}</p>}
 
-        <button type="submit" disabled={submitting} className="btn-primary w-full py-3">
+        <button type="submit" disabled={submitting} className="btn-primary rounded-full w-full py-3">
           {submitting ? 'Placing order…' : 'Place Order'}
         </button>
       </form>

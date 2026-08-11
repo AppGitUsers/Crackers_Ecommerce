@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { LayoutGrid, X, Check } from 'lucide-react'
 
 function pillClass(active) {
-  return `px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${
+  return `px-4 py-2 rounded-full text-sm font-semibold border transition-all active:scale-95 ${
     active
-      ? 'bg-brand-500 text-white border-brand-500'
+      ? 'bg-brand-500 text-white border-brand-500 shadow-md'
       : 'bg-white text-ink-700 border-sandal-300 hover:bg-sandal-100'
   }`
 }
@@ -41,7 +41,7 @@ export default function CategoryFilter({ categories, selected, onSelect }) {
       {/* Phone & tablet: fixed floating button, always in the same spot regardless of scroll */}
       <button
         onClick={() => setSheetOpen(true)}
-        className="xl:hidden fixed bottom-5 right-5 z-40 flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold pl-4 pr-5 py-3 rounded-full shadow-lg transition-colors"
+        className="xl:hidden fixed bottom-5 right-5 z-40 flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold pl-4 pr-5 py-3 rounded-full shadow-elevated transition-all active:scale-95"
       >
         <LayoutGrid size={18} />
         {selectedLabel}

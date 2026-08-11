@@ -37,8 +37,8 @@ export default function OrderSuccessPage() {
       )}
 
       <div className="flex gap-3 justify-center mt-6">
-        <Link to="/" className="btn-secondary">Continue Shopping</Link>
-        <Link to="/my-orders" className="btn-primary">Track My Orders</Link>
+        <Link to="/" className="btn-secondary rounded-full">Continue Shopping</Link>
+        <Link to="/my-orders" className="btn-primary rounded-full">Track My Orders</Link>
       </div>
     </div>
   )

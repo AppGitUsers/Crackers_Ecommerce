@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, Outlet } from 'react-router-dom'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, Phone, Package, ShoppingCart, ShieldCheck, PhoneCall } from 'lucide-react'
 import { OffersAPI } from '../../api/endpoints'
 import { useCart } from '../../context/CartContext'
 import OfferBanner from './OfferBanner.jsx'
@@ -41,37 +41,70 @@ export default function StorefrontLayout() {
     <div className="min-h-screen flex flex-col bg-white">
       {offers.length > 0 && <OfferBanner offers={offers} />}
 
-      <header className="bg-white border-b-2 border-brand-500 sticky top-0 z-20 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
-            <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shrink-0">
-              <Sparkles size={18} className="text-gold-400" />
+      <div className="sticky top-0 z-20 px-3 sm:px-4 pt-3">
+        <header className="max-w-[1600px] mx-auto bg-black rounded-full shadow-elevated px-3 sm:px-5 py-2 flex items-center justify-between gap-2 sm:gap-4">
+          <Link to="/" className="flex items-center gap-2.5 shrink-0">
+            <span className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-sky-600 flex items-center justify-center shrink-0">
+              <Sparkles size={16} className="text-white" />
             </span>
-            <span className="text-xl font-extrabold text-ink-900 tracking-tight">
-              Sivakasi <span className="text-brand-600">Crackers</span>
+            <span className="hidden sm:block text-lg font-extrabold text-white tracking-tight">
+              Sivakasi <span className="text-brand-400">Crackers</span>
             </span>
           </Link>
-          <nav className="flex items-center gap-4 text-sm font-semibold">
-            <Link to="/my-orders" className="text-ink-700 hover:text-brand-600 transition-colors">My Orders</Link>
-            <Link to="/cart" className="relative btn-primary flex items-center gap-2">
-              Cart
+
+          <div className="hidden md:flex items-center gap-2 bg-white/10 text-sky-300 text-xs font-semibold px-3 py-1.5 rounded-full">
+            <Phone size={13} />
+            We confirm every order by phone call
+          </div>
+
+          <nav className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <Link to="/my-orders" className="flex items-center gap-1.5 text-sandal-100 hover:text-white text-sm font-semibold transition-colors px-2">
+              <Package size={17} />
+              <span className="hidden sm:inline">My Orders</span>
+            </Link>
+            <Link
+              to="/cart"
+              className="relative w-10 h-10 rounded-full bg-brand-500 hover:bg-brand-600 flex items-center justify-center transition-all active:scale-90"
+              aria-label="Cart"
+            >
+              <ShoppingCart size={17} className="text-white" />
               {totalItems > 0 && (
-                <span className="bg-white text-brand-600 rounded-full text-xs font-bold w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-sky-500 text-white rounded-full text-[10px] font-bold w-5 h-5 flex items-center justify-center ring-2 ring-black">
                   {totalItems}
                 </span>
               )}
             </Link>
           </nav>
-        </div>
-      </header>
+        </header>
+      </div>
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
+      <main className="flex-1 max-w-[1600px] mx-auto w-full px-4 sm:px-6 lg:px-10 py-8">
         <Outlet />
       </main>
 
-      <footer className="bg-ink-900 text-sandal-200 text-sm py-6 mt-10">
-        <div className="max-w-6xl mx-auto px-4">
-          © {new Date().getFullYear()} Sivakasi Crackers. Orders confirmed by phone call after checkout.
+      <footer className="bg-black text-sandal-200 mt-10 rounded-t-[2.5rem]">
+        <div className="max-w-[1600px] mx-auto px-6 lg:px-10 py-8">
+          <div className="flex items-center gap-2.5 mb-4">
+            <span className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-sky-600 flex items-center justify-center shrink-0">
+              <Sparkles size={14} className="text-white" />
+            </span>
+            <span className="text-base font-extrabold text-white tracking-tight">
+              Sivakasi <span className="text-brand-400">Crackers</span>
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-3 mb-6">
+            <span className="flex items-center gap-1.5 bg-white/5 text-xs font-semibold px-3 py-1.5 rounded-full">
+              <ShieldCheck size={13} className="text-sky-400" />
+              Genuine Sivakasi Crackers
+            </span>
+            <span className="flex items-center gap-1.5 bg-white/5 text-xs font-semibold px-3 py-1.5 rounded-full">
+              <PhoneCall size={13} className="text-sky-400" />
+              Confirmed By Phone Call
+            </span>
+          </div>
+          <div className="text-sm border-t border-white/10 pt-4">
+            © {new Date().getFullYear()} Sivakasi Crackers. Orders confirmed by phone call after checkout.
+          </div>
         </div>
       </footer>
     </div>

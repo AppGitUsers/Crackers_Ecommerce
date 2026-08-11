@@ -105,12 +105,12 @@ export default function MyOrdersPage() {
       <h1 className="text-xl font-extrabold text-ink-900 mb-4">My Orders</h1>
       <form onSubmit={handleLookup} className="flex gap-2 mb-6">
         <input
-          className="input"
+          className="input rounded-full"
           placeholder="Enter the phone number you checked out with"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
         />
-        <button className="btn-primary shrink-0" disabled={loading}>{loading ? 'Searching…' : 'Find'}</button>
+        <button className="btn-primary rounded-full shrink-0" disabled={loading}>{loading ? 'Searching…' : 'Find'}</button>
       </form>
 
       {orders !== null && (

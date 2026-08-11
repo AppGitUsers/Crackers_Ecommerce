@@ -39,7 +39,7 @@ function Slide({ offer }) {
             : 'bg-gradient-to-r from-brand-700 to-ink-900'
         }`}
       />
-      <div className="relative h-full max-w-6xl mx-auto px-14 sm:px-16 flex flex-col justify-center text-white">
+      <div className="relative h-full max-w-[1600px] mx-auto px-14 sm:px-16 flex flex-col justify-center text-white">
         <span className="text-gold-400 text-xs font-bold uppercase tracking-widest mb-1 flex items-center gap-1.5">
           <Sparkles size={12} />
           Limited Time Offer

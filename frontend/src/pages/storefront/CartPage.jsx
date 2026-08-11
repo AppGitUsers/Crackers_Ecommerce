@@ -41,7 +41,7 @@ export default function CartPage() {
         <div className="mb-3">{backLink}</div>
         <div className="text-center py-20">
           <p className="text-ink-600 mb-4">Your cart is empty.</p>
-          <Link to="/" className="btn-primary">Browse products</Link>
+          <Link to="/" className="btn-primary rounded-full">Browse products</Link>
         </div>
       </div>
     )
@@ -91,7 +91,7 @@ export default function CartPage() {
               <p className="font-semibold truncate text-ink-900">{item.name}</p>
               <p className="text-sm text-ink-500">₹{item.price} / {item.unit_label}</p>
             </div>
-            <div className="flex items-center border border-sandal-300 rounded-lg overflow-hidden">
+            <div className="flex items-center border border-sandal-300 rounded-full overflow-hidden">
               <button className="w-8 h-8 font-bold hover:bg-sandal-100 active:scale-90 transition-transform" onClick={() => setQuantity(item.product_id, item.quantity - 1)}>−</button>
               <span className="w-8 text-center font-semibold text-ink-900">{item.quantity}</span>
               <button className="w-8 h-8 font-bold hover:bg-sandal-100 active:scale-90 transition-transform" onClick={() => setQuantity(item.product_id, item.quantity + 1)}>+</button>
@@ -109,7 +109,7 @@ export default function CartPage() {
         {unlockedOffers.length > 0 ? 'Offer details above will be applied at checkout.' : 'Offers, if any, are applied at checkout.'}
       </p>
 
-      <button className="btn-primary w-full mt-4 py-3" onClick={() => navigate('/checkout')}>
+      <button className="btn-primary rounded-full w-full mt-4 py-3" onClick={() => navigate('/checkout')}>
         Proceed to Checkout
       </button>
     </div>
