@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.text import slugify
 
 from apps.categories.models import Category
+from apps.core.images import compress_image
 
 
 class Product(models.Model):
@@ -54,6 +55,14 @@ class ProductImage(models.Model):
 
     class Meta:
         ordering = ["display_order", "id"]
+
+    def save(self, *args, **kwargs):
+        # _committed is False only when a new file was just assigned (not yet
+        # written to storage) — skips recompressing an already-compressed
+        # image on saves that don't touch this field (e.g. reordering).
+        if self.image and not self.image._committed:
+            self.image = compress_image(self.image, max_dimension=1200)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Image for {self.product.name}"

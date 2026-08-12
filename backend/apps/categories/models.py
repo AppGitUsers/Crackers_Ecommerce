@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils.text import slugify
 
+from apps.core.images import compress_image
+
 
 class Category(models.Model):
     name = models.CharField(max_length=120, unique=True)
@@ -19,6 +21,11 @@ class Category(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
+        # _committed is False only when a new file was just assigned (not yet
+        # written to storage) — skips recompressing an already-compressed
+        # image on saves that don't touch this field (e.g. renaming).
+        if self.image and not self.image._committed:
+            self.image = compress_image(self.image, max_dimension=1200)
         super().save(*args, **kwargs)
 
     def __str__(self):

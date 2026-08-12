@@ -1,5 +1,6 @@
 from django.db import models
 from apps.products.models import Product
+from apps.core.images import compress_image
 
 
 class Offer(models.Model):
@@ -24,6 +25,14 @@ class Offer(models.Model):
 
     class Meta:
         ordering = ["-priority", "-created_at"]
+
+    def save(self, *args, **kwargs):
+        # _committed is False only when a new file was just assigned (not yet
+        # written to storage) — skips recompressing an already-compressed
+        # image on saves that don't touch this field.
+        if self.banner_image and not self.banner_image._committed:
+            self.banner_image = compress_image(self.banner_image, max_dimension=1920)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
