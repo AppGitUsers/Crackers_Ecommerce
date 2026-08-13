@@ -66,6 +66,8 @@ export const CustomersAPI = {
 }
 
 export const CallsAPI = {
+  orders: (params) => api.get('/calls/orders/', { params }),
+  history: (orderId) => api.get('/calls/', { params: { order: orderId, ordering: 'created_at' } }),
   list: (params) => api.get('/calls/', { params }),
   create: (data) => api.post('/calls/', data),
   update: (id, data) => api.patch(`/calls/${id}/`, data),

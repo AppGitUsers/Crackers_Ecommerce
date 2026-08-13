@@ -36,7 +36,11 @@
       "Bash(sed -i 's|http://localhost:4180/|http://localhost:5173/|g' \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_all_card.js\")",
       "Bash(node \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_all_card.js\")",
       "Bash(rm -f \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/verify_all_card.js\" \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/debug_preview.js\" \"/c/Users/HP-PC/AppData/Local/Temp/claude/d--Projects-crackers-ecommerce/e843e00f-8d54-4843-b3a1-79a32bd0142a/scratchpad/pw/shots/\"*.png *)",
-      "Bash(\"./venv/Scripts/python.exe\" -c \"import PIL; print\\('Pillow version:', PIL.__version__\\)\")"
+      "Bash(\"./venv/Scripts/python.exe\" -c \"import PIL; print\\('Pillow version:', PIL.__version__\\)\")",
+      "Bash(./venv/Scripts/python.exe manage.py backfill_call_logs)",
+      "Bash(./venv/Scripts/python.exe manage.py shell -c ' *)",
+      "Bash(./venv/Scripts/python.exe manage.py makemigrations calls)",
+      "Bash(./venv/Scripts/python.exe manage.py migrate calls)"
     ],
     "additionalDirectories": [
       "C:\\Users\\HP-PC\\AppData\\Local\\Temp\\claude\\d--Projects-crackers-ecommerce\\e843e00f-8d54-4843-b3a1-79a32bd0142a\\scratchpad\\pw\\shots",

@@ -12,6 +12,7 @@ from apps.orders.models import Order
 from apps.products.models import Product
 from apps.categories.models import Category
 from apps.calls.models import CallLog
+from apps.calls.services import orders_with_call_summary
 
 
 @api_view(["GET"])
@@ -43,8 +44,11 @@ def dashboard_overview(request):
         .order_by("day")
     )
 
-    calls_pending_followup = CallLog.objects.filter(
-        status__in=[CallLog.CallStatus.NOT_CALLED, CallLog.CallStatus.NO_ANSWER, CallLog.CallStatus.INTERESTED]
+    # Counts orders whose *latest* call attempt is still unresolved, not raw
+    # CallLog rows — an order keeps its earlier "not called" row as history
+    # even after a follow-up call moves it to a different status.
+    calls_pending_followup = orders_with_call_summary().filter(
+        latest_call_status__in=[CallLog.CallStatus.NOT_CALLED, CallLog.CallStatus.NO_ANSWER]
     ).count()
 
     return Response({

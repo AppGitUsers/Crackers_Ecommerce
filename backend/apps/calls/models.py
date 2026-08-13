@@ -14,8 +14,6 @@ class CallLog(models.Model):
         NOT_CALLED = "not_called", "Not Called Yet"
         NO_ANSWER = "no_answer", "Called — No Answer"
         ANSWERED = "answered", "Called — Answered"
-        INTERESTED = "interested", "Interested / Proceeding"
-        NOT_INTERESTED = "not_interested", "Not Interested"
         DEAL_CLOSED = "deal_closed", "Deal Closed — Paid"
         CANCELLED = "cancelled", "Cancelled"
 
