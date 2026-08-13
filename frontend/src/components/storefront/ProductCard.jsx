@@ -61,9 +61,9 @@ export default function ProductCard({ product }) {
         >
           {/* The whole wave-topped shelf is the button, not just an icon on it */}
           <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 48" preserveAspectRatio="none" aria-hidden="true">
-            <path d="M0,18 C50,0 150,0 200,18 L200,48 L0,48 Z" className="fill-brand-100 group-hover:fill-brand-200 transition-colors" />
+            <path d="M0,18 C50,0 150,0 200,18 L200,48 L0,48 Z" className="fill-brand-500 group-hover:fill-brand-600 transition-colors" />
           </svg>
-          <span className="relative flex items-center justify-center h-full font-bold text-brand-700 text-sm">
+          <span className="relative flex items-center justify-center h-full font-bold text-white text-sm">
             Add
           </span>
         </button>
