@@ -33,11 +33,13 @@ class AdminTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    linked_employee_name = serializers.CharField(source="linked_employee.name", read_only=True, default=None)
+
     class Meta:
         model = User
         fields = [
-            "id", "username", "first_name", "last_name", "email",
-            "phone", "role", "is_active_staff", "created_at",
+            "id", "username", "first_name", "last_name", "email", "phone", "role",
+            "is_active_staff", "linked_employee", "linked_employee_name", "created_at",
         ]
         read_only_fields = ["id", "created_at"]
 
@@ -49,7 +51,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             "id", "username", "first_name", "last_name", "email",
-            "phone", "role", "password", "is_active_staff",
+            "phone", "role", "password", "is_active_staff", "linked_employee",
         ]
 
     def create(self, validated_data):

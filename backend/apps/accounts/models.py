@@ -19,6 +19,9 @@ class User(AbstractUser):
     is_active_staff = models.BooleanField(
         default=True, help_text="Toggle to quickly disable a staff login without deleting them."
     )
+    linked_employee = models.OneToOneField(
+        "staff.Employee", on_delete=models.SET_NULL, null=True, blank=True, related_name="user_account"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -20,6 +20,7 @@ import OrderDetailPage from './pages/admin/OrderDetailPage.jsx'
 import OffersPage from './pages/admin/OffersPage.jsx'
 import FinancePage from './pages/admin/FinancePage.jsx'
 import CallsPage from './pages/admin/CallsPage.jsx'
+import StaffPage from './pages/admin/staff/StaffPage.jsx'
 
 export default function App() {
   return (
@@ -51,6 +52,7 @@ export default function App() {
         <Route path="offers" element={<OffersPage />} />
         <Route path="finance" element={<FinancePage />} />
         <Route path="calls" element={<CallsPage />} />
+        <Route path="staff" element={<StaffPage />} />
       </Route>
     </Routes>
   )

@@ -87,3 +87,41 @@ export const FinanceAPI = {
 export const DashboardAPI = {
   overview: (days = 30) => api.get('/dashboard/overview/', { params: { days } }),
 }
+
+export const StaffAPI = {
+  departments: {
+    list: (p) => api.get('/staff/departments/', { params: p }),
+    create: (d) => api.post('/staff/departments/', d),
+    update: (id, d) => api.patch(`/staff/departments/${id}/`, d),
+    remove: (id) => api.delete(`/staff/departments/${id}/`),
+  },
+  shifts: {
+    list: (p) => api.get('/staff/shifts/', { params: p }),
+    create: (d) => api.post('/staff/shifts/', d),
+    update: (id, d) => api.patch(`/staff/shifts/${id}/`, d),
+    remove: (id) => api.delete(`/staff/shifts/${id}/`),
+  },
+  employees: {
+    list: (p) => api.get('/staff/employees/', { params: p }),
+    detail: (id) => api.get(`/staff/employees/${id}/`),
+    create: (fd) => api.post('/staff/employees/', fd, { headers: { 'Content-Type': 'multipart/form-data' } }),
+    update: (id, fd) => api.patch(`/staff/employees/${id}/`, fd, { headers: { 'Content-Type': 'multipart/form-data' } }),
+    remove: (id) => api.delete(`/staff/employees/${id}/`),
+    attendanceCalendar: (id, p) => api.get(`/staff/employees/${id}/attendance_calendar/`, { params: p }),
+    paymentHistory: (id) => api.get(`/staff/employees/${id}/payment_history/`),
+  },
+  attendance: {
+    list: (p) => api.get('/staff/attendance/', { params: p }),
+    create: (d) => api.post('/staff/attendance/', d),
+    update: (id, d) => api.patch(`/staff/attendance/${id}/`, d),
+    remove: (id) => api.delete(`/staff/attendance/${id}/`),
+    byDate: (date) => api.get('/staff/attendance/by_date/', { params: { date } }),
+    monthlySummary: (p) => api.get('/staff/attendance/monthly_summary/', { params: p }),
+  },
+  payments: {
+    list: (p) => api.get('/staff/payments/', { params: p }),
+    create: (d) => api.post('/staff/payments/', d),
+    update: (id, d) => api.patch(`/staff/payments/${id}/`, d),
+    remove: (id) => api.delete(`/staff/payments/${id}/`),
+  },
+}
