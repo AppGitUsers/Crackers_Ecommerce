@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Download, MessageCircle } from 'lucide-react'
 import { OrdersAPI } from '../../api/endpoints'
 import { PageLoader, ConfirmDialog } from '../../components/admin/ui.jsx'
+import { useToast } from '../../context/ToastContext.jsx'
 
 const FULFILLMENT_OPTIONS = ['received', 'packed', 'out_for_delivery', 'delivered', 'cancelled']
 // 'received' and 'cancelled' apply regardless of payment; the rest of the
@@ -23,6 +24,7 @@ function toWhatsAppNumber(phone) {
 }
 
 export default function OrderDetailPage() {
+  const toast = useToast()
   const { id } = useParams()
   const [order, setOrder] = useState(null)
   const [note, setNote] = useState('')
@@ -75,6 +77,7 @@ export default function OrderDetailPage() {
     setSaving(true)
     try {
       await OrdersAPI.updateStatus(id, { status_type: statusType, status: statusValue, note })
+      toast.success(`${statusType === 'fulfillment' ? 'Order status' : 'Payment status'} updated to "${statusValue.replace(/_/g, ' ')}".`)
       setNote('')
       load()
     } finally {
@@ -190,9 +193,7 @@ export default function OrderDetailPage() {
                 key={s}
                 disabled={saving}
                 onClick={() => handleStatusClick('fulfillment', s)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize border transition-colors ${
-                  order.current_status === s ? 'bg-brand-500 text-white border-brand-500' : 'bg-white border-sandal-300 text-ink-700 hover:bg-sandal-100'
-                }`}
+                className={`filter-pill capitalize ${order.current_status === s ? 'active' : ''}`}
               >
                 {s.replace(/_/g, ' ')}
               </button>
@@ -210,9 +211,7 @@ export default function OrderDetailPage() {
                 key={s}
                 disabled={saving}
                 onClick={() => handleStatusClick('payment', s)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize border transition-colors ${
-                  order.payment_status === s ? 'bg-brand-500 text-white border-brand-500' : 'bg-white border-sandal-300 text-ink-700 hover:bg-sandal-100'
-                }`}
+                className={`filter-pill capitalize ${order.payment_status === s ? 'active' : ''}`}
               >
                 {s}
               </button>

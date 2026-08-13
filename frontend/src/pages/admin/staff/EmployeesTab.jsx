@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Plus, Users, CalendarDays, Search } from 'lucide-react'
 import { StaffAPI } from '../../../api/endpoints'
-import { Modal, ConfirmDialog, PageLoader, Empty } from '../../../components/admin/ui.jsx'
+import { Modal, ConfirmDialog, PageLoader, Empty, Toggle, Select, DatePicker, FileInput } from '../../../components/admin/ui.jsx'
+import { useToast } from '../../../context/ToastContext.jsx'
 
 const EMPLOYMENT_LABELS = { full_time: 'Full Time', part_time: 'Part Time', contract: 'Contract' }
+const EMPLOYMENT_OPTIONS = [
+  { value: 'full_time', label: 'Full Time' },
+  { value: 'part_time', label: 'Part Time' },
+  { value: 'contract', label: 'Contract' },
+]
 
 const EMPTY_FORM = {
   name: '', phone: '', email: '', joined_date: '', department: '', shift: '',
@@ -11,6 +17,7 @@ const EMPTY_FORM = {
 }
 
 export default function EmployeesTab({ onOpenCalendar }) {
+  const toast = useToast()
   const [employees, setEmployees] = useState([])
   const [departments, setDepartments] = useState([])
   const [shifts, setShifts] = useState([])
@@ -64,8 +71,10 @@ export default function EmployeesTab({ onOpenCalendar }) {
 
     if (editing) {
       await StaffAPI.employees.update(editing.id, fd)
+      toast.success('Employee updated.')
     } else {
       await StaffAPI.employees.create(fd)
+      toast.success('Employee added.')
     }
     setShowForm(false)
     load()
@@ -73,6 +82,7 @@ export default function EmployeesTab({ onOpenCalendar }) {
 
   async function handleDelete(id) {
     await StaffAPI.employees.remove(id)
+    toast.success('Employee deleted.')
     load()
   }
 
@@ -164,7 +174,7 @@ export default function EmployeesTab({ onOpenCalendar }) {
             </div>
             <div>
               <label className="label">Joined Date</label>
-              <input type="date" className="input" value={form.joined_date} onChange={(e) => setForm({ ...form, joined_date: e.target.value })} required />
+              <DatePicker value={form.joined_date} onChange={(v) => setForm({ ...form, joined_date: v })} />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -180,27 +190,30 @@ export default function EmployeesTab({ onOpenCalendar }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="label">Department</label>
-              <select className="select" value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })}>
-                <option value="">None</option>
-                {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-              </select>
+              <Select
+                value={form.department}
+                onChange={(v) => setForm({ ...form, department: v })}
+                placeholder="None"
+                options={[{ value: '', label: 'None' }, ...departments.map((d) => ({ value: d.id, label: d.name }))]}
+              />
             </div>
             <div>
               <label className="label">Shift</label>
-              <select className="select" value={form.shift} onChange={(e) => setForm({ ...form, shift: e.target.value })}>
-                <option value="">None</option>
-                {shifts.map((s) => <option key={s.id} value={s.id}>{s.name} ({s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)})</option>)}
-              </select>
+              <Select
+                value={form.shift}
+                onChange={(v) => setForm({ ...form, shift: v })}
+                placeholder="None"
+                options={[
+                  { value: '', label: 'None' },
+                  ...shifts.map((s) => ({ value: s.id, label: `${s.name} (${s.start_time.slice(0, 5)}–${s.end_time.slice(0, 5)})` })),
+                ]}
+              />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="label">Employment Type</label>
-              <select className="select" value={form.employment_type} onChange={(e) => setForm({ ...form, employment_type: e.target.value })}>
-                <option value="full_time">Full Time</option>
-                <option value="part_time">Part Time</option>
-                <option value="contract">Contract</option>
-              </select>
+              <Select value={form.employment_type} onChange={(v) => setForm({ ...form, employment_type: v })} options={EMPLOYMENT_OPTIONS} />
             </div>
             <div>
               <label className="label">Monthly Salary (₹)</label>
@@ -213,10 +226,10 @@ export default function EmployeesTab({ onOpenCalendar }) {
           </div>
           <div>
             <label className="label">Photo</label>
-            <input type="file" accept="image/*" className="text-sm" onChange={(e) => setPhotoFile(e.target.files[0])} />
+            <FileInput accept="image/*" fileName={photoFile?.name} onChange={(e) => setPhotoFile(e.target.files[0])} />
           </div>
-          <div className="flex items-center gap-2">
-            <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
+          <div className="flex items-center gap-2.5">
+            <Toggle checked={form.is_active} onChange={(next) => setForm({ ...form, is_active: next })} label="Active" />
             <label className="text-sm font-semibold text-ink-700">Active</label>
           </div>
         </form>

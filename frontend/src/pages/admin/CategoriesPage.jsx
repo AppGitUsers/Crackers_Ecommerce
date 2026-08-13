@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { CategoriesAdminAPI } from '../../api/endpoints'
-import { Modal, ConfirmDialog, PageLoader } from '../../components/admin/ui.jsx'
+import { Modal, ConfirmDialog, PageLoader, Toggle, FileInput } from '../../components/admin/ui.jsx'
+import { useToast } from '../../context/ToastContext.jsx'
 
 const EMPTY_FORM = { name: '', description: '', is_active: true, display_order: 0 }
 
 export default function CategoriesPage() {
+  const toast = useToast()
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -45,8 +47,10 @@ export default function CategoriesPage() {
 
     if (editing) {
       await CategoriesAdminAPI.update(editing.id, fd)
+      toast.success('Category updated.')
     } else {
       await CategoriesAdminAPI.create(fd)
+      toast.success('Category created.')
     }
     setShowForm(false)
     load()
@@ -54,6 +58,7 @@ export default function CategoriesPage() {
 
   async function handleDelete(id) {
     await CategoriesAdminAPI.remove(id)
+    toast.success('Category deleted.')
     load()
   }
 
@@ -147,15 +152,15 @@ export default function CategoriesPage() {
           </div>
           <div>
             <label className="label">Image</label>
-            <input type="file" accept="image/*" className="input" onChange={(e) => setImageFile(e.target.files[0])} />
+            <FileInput accept="image/*" fileName={imageFile?.name} onChange={(e) => setImageFile(e.target.files[0])} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="label">Display Order</label>
               <input type="number" className="input" value={form.display_order} onChange={(e) => setForm({ ...form, display_order: e.target.value })} />
             </div>
-            <div className="flex items-center gap-2 pt-6">
-              <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
+            <div className="flex items-center gap-2.5 pt-6">
+              <Toggle checked={form.is_active} onChange={(next) => setForm({ ...form, is_active: next })} label="Active" />
               <label className="text-sm font-semibold text-ink-700">Active</label>
             </div>
           </div>

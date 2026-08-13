@@ -3,15 +3,54 @@
 @tailwind utilities;
 
 body {
-  @apply bg-white text-ink-900 font-sans;
+  @apply bg-white text-ink-900 font-sans tabular-nums;
+}
+
+/* Recharts renders axis/legend/label text as SVG <text>, which doesn't
+   follow this app's Inter font the way normal HTML does — it quietly falls
+   back to the browser's default sans, which reads as mismatched next to
+   everything else. Force it back in line. */
+.recharts-wrapper text {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Custom scrollbar — the default OS scrollbar (wide, square, unstyled) is one
+   more thing that breaks the illusion next to an otherwise-designed UI. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #b0b0b0 transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #b0b0b0;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: #8c8c8c;
+}
+
+/* Native checkboxes/radios (multi-select lists, etc.) can at least pick up
+   the brand color instead of the OS-default blue — a real custom control
+   isn't worth building for these, but this alone reads far less "stock". */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: #e01e26;
 }
 
 .btn-primary {
-  @apply bg-brand-500 hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100;
+  @apply inline-flex items-center justify-center gap-2 whitespace-nowrap h-10 px-4 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold rounded-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100;
 }
 
 .btn-secondary {
-  @apply bg-white hover:bg-sandal-100 text-ink-800 font-semibold px-4 py-2 rounded-lg border border-sandal-300 transition-all active:scale-95;
+  @apply inline-flex items-center justify-center gap-2 whitespace-nowrap h-10 px-4 bg-white hover:bg-sandal-100 text-ink-800 text-sm font-semibold rounded-lg border border-sandal-300 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100;
 }
 
 .card {
@@ -44,23 +83,34 @@ body {
 /* ---- Admin CRM component layer ---- */
 
 .btn-outline {
-  @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-brand-500 text-brand-600 text-sm font-semibold hover:bg-brand-50 transition-colors;
+  @apply inline-flex items-center justify-center gap-2 whitespace-nowrap h-10 px-4 rounded-lg border border-brand-500 text-brand-600 text-sm font-semibold hover:bg-brand-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
 .btn-ghost {
-  @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-ink-600 text-sm font-semibold hover:bg-sandal-100 transition-colors;
+  @apply inline-flex items-center justify-center gap-2 whitespace-nowrap h-9 px-3 rounded-lg text-ink-600 text-sm font-semibold hover:bg-sandal-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
 .btn-danger {
-  @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors disabled:opacity-50;
+  @apply inline-flex items-center justify-center gap-2 whitespace-nowrap h-10 px-4 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* Compact variant — combine with a btn-* color class, e.g. "btn-secondary btn-sm",
+   for tighter contexts like table-row actions or pagination controls. */
+.btn-sm {
+  @apply h-8 px-3 text-xs;
 }
 
 .input-sm {
   @apply w-full border border-sandal-300 rounded-md px-3 py-1.5 text-sm text-ink-900 focus:outline-none focus:ring-1 focus:ring-brand-400 bg-white;
 }
 
+/* Base look for the closed state of the custom Select component (ui.jsx) —
+   the chevron is a real ChevronDown icon rendered by that component, not a
+   CSS background-image, so it can animate (rotate) with the open state and
+   there's no risk of a second chevron fighting it. No native <select> in the
+   admin app uses this class anymore. */
 .select {
-  @apply w-full border border-sandal-300 rounded-lg px-3 py-2 text-sm text-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white cursor-pointer;
+  @apply w-full border border-sandal-300 rounded-lg pl-3 pr-9 py-2 text-sm text-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
 .label {
@@ -137,7 +187,7 @@ body {
   @apply flex flex-wrap items-center justify-between gap-3 mb-6;
 }
 .page-title {
-  @apply text-2xl font-extrabold text-ink-900;
+  @apply text-2xl font-bold text-ink-900;
 }
 .page-subtitle {
   @apply text-sm text-ink-500 mt-0.5;
@@ -149,6 +199,17 @@ body {
 }
 .divider {
   @apply border-t border-sandal-200 my-5;
+}
+
+/* Filter pills — segmented single-select filter (status, date range, etc.) */
+.filter-pill {
+  @apply inline-flex items-center justify-center gap-1.5 whitespace-nowrap h-9 px-3.5 rounded-full text-xs font-semibold border transition-colors;
+}
+.filter-pill.active {
+  @apply bg-brand-500 border-brand-500 text-white;
+}
+.filter-pill:not(.active) {
+  @apply bg-white border-sandal-300 text-ink-600 hover:bg-sandal-100;
 }
 
 /* Sidebar */

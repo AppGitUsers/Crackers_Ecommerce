@@ -2,10 +2,16 @@ import { useEffect, useState } from 'react'
 import { Plus, Eye, EyeOff, KeyRound, ShieldAlert } from 'lucide-react'
 import { AuthAPI, StaffAPI } from '../../../api/endpoints'
 import { useAuth } from '../../../context/AuthContext'
-import { Modal, ConfirmDialog, PageLoader, Empty } from '../../../components/admin/ui.jsx'
+import { Modal, ConfirmDialog, PageLoader, Empty, Toggle, Select } from '../../../components/admin/ui.jsx'
+import { useToast } from '../../../context/ToastContext.jsx'
 
 const ROLE_BADGE = { superadmin: 'badge-brand', admin: 'badge-blue', staff: 'badge-gold' }
 const ROLE_LABEL = { superadmin: 'Super Admin', admin: 'Admin', staff: 'Staff' }
+const ROLE_OPTIONS = [
+  { value: 'staff', label: 'Staff' },
+  { value: 'admin', label: 'Admin' },
+  { value: 'superadmin', label: 'Super Admin' },
+]
 
 function emptyForm() {
   return {
@@ -15,6 +21,7 @@ function emptyForm() {
 }
 
 export default function CredentialsTab() {
+  const toast = useToast()
   const { user } = useAuth()
   const [users, setUsers] = useState([])
   const [employees, setEmployees] = useState([])
@@ -81,8 +88,10 @@ export default function CredentialsTab() {
     try {
       if (editing) {
         await AuthAPI.users.update(editing.id, payload)
+        toast.success('Login updated.')
       } else {
         await AuthAPI.users.create(payload)
+        toast.success('Login created.')
       }
       setShowForm(false)
       load()
@@ -93,6 +102,7 @@ export default function CredentialsTab() {
 
   async function handleDelete(id) {
     await AuthAPI.users.remove(id)
+    toast.success('Login deleted.')
     load()
   }
 
@@ -228,21 +238,19 @@ export default function CredentialsTab() {
           )}
           <div>
             <label className="label">Role</label>
-            <select className="select" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
-              <option value="staff">Staff</option>
-              <option value="admin">Admin</option>
-              <option value="superadmin">Super Admin</option>
-            </select>
+            <Select value={form.role} onChange={(v) => setForm({ ...form, role: v })} options={ROLE_OPTIONS} />
           </div>
           <div>
             <label className="label">Link to Employee (optional)</label>
-            <select className="select" value={form.linked_employee} onChange={(e) => setForm({ ...form, linked_employee: e.target.value })}>
-              <option value="">None</option>
-              {employees.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
-            </select>
+            <Select
+              value={form.linked_employee}
+              onChange={(v) => setForm({ ...form, linked_employee: v })}
+              placeholder="None"
+              options={[{ value: '', label: 'None' }, ...employees.map((e) => ({ value: e.id, label: e.name }))]}
+            />
           </div>
-          <div className="flex items-center gap-2">
-            <input type="checkbox" checked={form.is_active_staff} onChange={(e) => setForm({ ...form, is_active_staff: e.target.checked })} />
+          <div className="flex items-center gap-2.5">
+            <Toggle checked={form.is_active_staff} onChange={(next) => setForm({ ...form, is_active_staff: next })} label="Active" />
             <label className="text-sm font-semibold text-ink-700">Active</label>
           </div>
         </form>

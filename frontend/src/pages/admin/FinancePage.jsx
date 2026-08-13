@@ -9,7 +9,24 @@ import {
 } from 'lucide-react'
 import { FinanceAPI } from '../../api/endpoints'
 import StatCard from '../../components/admin/StatCard.jsx'
-import { Modal } from '../../components/admin/ui.jsx'
+import { Modal, Pagination, Select, DatePicker } from '../../components/admin/ui.jsx'
+import { useToast } from '../../context/ToastContext.jsx'
+
+const TX_TYPE_OPTIONS = [
+  { value: 'income', label: 'Income' },
+  { value: 'expense', label: 'Expense' },
+]
+const TX_CATEGORY_OPTIONS = [
+  { value: 'sales', label: 'Sales' },
+  { value: 'manual_payment', label: 'Manual Order Payment' },
+  { value: 'inventory_purchase', label: 'Inventory Purchase' },
+  { value: 'delivery', label: 'Delivery / Logistics' },
+  { value: 'marketing', label: 'Marketing' },
+  { value: 'salary', label: 'Salary / Staff' },
+  { value: 'misc', label: 'Miscellaneous' },
+]
+
+const TX_PAGE_SIZE = 20
 
 // Local-calendar-date formatting — toISOString() converts to UTC first, which
 // silently shifts the date by a day depending on the machine's timezone offset.
@@ -84,10 +101,13 @@ function CategoryDonut({ title, rows, emptyLabel }) {
 }
 
 export default function FinancePage() {
+  const toast = useToast()
   const [monthStart, setMonthStart] = useState(() => startOfMonth(new Date()))
   const [summary, setSummary] = useState(null)
   const [trend, setTrend] = useState([])
   const [transactions, setTransactions] = useState([])
+  const [txCount, setTxCount] = useState(0)
+  const [txPage, setTxPage] = useState(1)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [exporting, setExporting] = useState(false)
@@ -96,8 +116,16 @@ export default function FinancePage() {
   const monthLabel = monthStart.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
   const isCurrentMonth = startOfMonth(new Date()).getTime() === monthStart.getTime()
 
-  function loadTransactions() {
-    FinanceAPI.list().then(({ data }) => setTransactions(data.results || data))
+  function loadTransactions(pageToLoad = txPage) {
+    FinanceAPI.list({ page: pageToLoad }).then(({ data }) => {
+      setTransactions(data.results || data)
+      setTxCount(data.count ?? (data.results || data).length)
+    })
+  }
+
+  function goToTxPage(p) {
+    setTxPage(p)
+    loadTransactions(p)
   }
 
   useEffect(() => {
@@ -116,9 +144,10 @@ export default function FinancePage() {
   async function handleSubmit(e) {
     e.preventDefault()
     await FinanceAPI.create(form)
+    toast.success('Transaction recorded.')
     setForm(EMPTY_FORM)
     setShowForm(false)
-    loadTransactions()
+    goToTxPage(1)
     FinanceAPI.summary({ from, to }).then(({ data }) => setSummary(data))
     FinanceAPI.trend(6).then(({ data }) => setTrend(data))
   }
@@ -210,6 +239,8 @@ export default function FinancePage() {
         <CategoryDonut title="Expense Breakdown" rows={expenseRows} emptyLabel="No expense recorded this month." />
       </div>
 
+      <h2 className="section-title">All Transactions</h2>
+
       {/* Phone/tablet: card grid, no horizontal scrolling */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:hidden">
         {transactions.map((t) => (
@@ -257,6 +288,8 @@ export default function FinancePage() {
         </table>
       </div>
 
+      <Pagination page={txPage} count={txCount} pageSize={TX_PAGE_SIZE} onChange={goToTxPage} itemLabel="transaction" />
+
       <Modal
         open={showForm}
         onClose={() => setShowForm(false)}
@@ -272,22 +305,11 @@ export default function FinancePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="label">Type</label>
-              <select className="input" value={form.transaction_type} onChange={(e) => setForm({ ...form, transaction_type: e.target.value })}>
-                <option value="income">Income</option>
-                <option value="expense">Expense</option>
-              </select>
+              <Select value={form.transaction_type} onChange={(v) => setForm({ ...form, transaction_type: v })} options={TX_TYPE_OPTIONS} />
             </div>
             <div>
               <label className="label">Category</label>
-              <select className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-                <option value="sales">Sales</option>
-                <option value="manual_payment">Manual Order Payment</option>
-                <option value="inventory_purchase">Inventory Purchase</option>
-                <option value="delivery">Delivery / Logistics</option>
-                <option value="marketing">Marketing</option>
-                <option value="salary">Salary / Staff</option>
-                <option value="misc">Miscellaneous</option>
-              </select>
+              <Select value={form.category} onChange={(v) => setForm({ ...form, category: v })} options={TX_CATEGORY_OPTIONS} />
             </div>
           </div>
           <div>
@@ -296,7 +318,7 @@ export default function FinancePage() {
           </div>
           <div>
             <label className="label">Date</label>
-            <input type="date" className="input" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
+            <DatePicker value={form.date} onChange={(v) => setForm({ ...form, date: v })} />
           </div>
           <div>
             <label className="label">Description</label>

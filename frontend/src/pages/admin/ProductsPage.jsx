@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Plus, ImageOff } from 'lucide-react'
 import { CategoriesAdminAPI, ProductsAPI } from '../../api/endpoints'
-import { Modal, ConfirmDialog, PageLoader } from '../../components/admin/ui.jsx'
+import { Modal, ConfirmDialog, PageLoader, Toggle, Select, FileInput } from '../../components/admin/ui.jsx'
+import { useToast } from '../../context/ToastContext.jsx'
 
 const EMPTY_FORM = { category: '', name: '', description: '', price: '', stock_quantity: 0, unit_label: 'box', is_available: true }
 
 export default function ProductsPage() {
+  const toast = useToast()
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
@@ -50,8 +52,10 @@ export default function ProductsPage() {
 
     if (editing) {
       await ProductsAPI.update(editing.id, fd)
+      toast.success('Product updated.')
     } else {
       await ProductsAPI.create(fd)
+      toast.success('Product created.')
     }
     setShowForm(false)
     load()
@@ -59,6 +63,7 @@ export default function ProductsPage() {
 
   async function handleDelete(id) {
     await ProductsAPI.remove(id)
+    toast.success('Product deleted.')
     load()
   }
 
@@ -71,12 +76,10 @@ export default function ProductsPage() {
     setEditing(data)
   }
 
-  async function toggleAvailability(product) {
-    await ProductsAPI.update(product.id, (() => {
-      const fd = new FormData()
-      fd.append('is_available', !product.is_available)
-      return fd
-    })())
+  async function toggleAvailability(product, nextValue) {
+    const fd = new FormData()
+    fd.append('is_available', nextValue)
+    await ProductsAPI.update(product.id, fd)
     load()
   }
 
@@ -90,11 +93,13 @@ export default function ProductsPage() {
         </button>
       </div>
 
-      <div className="mb-4">
-        <select className="input w-56" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-          <option value="">All Categories</option>
-          {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+      <div className="mb-4 w-56">
+        <Select
+          value={categoryFilter}
+          onChange={setCategoryFilter}
+          placeholder="All Categories"
+          options={[{ value: '', label: 'All Categories' }, ...categories.map((c) => ({ value: c.id, label: c.name }))]}
+        />
       </div>
 
       {loading ? (
@@ -119,12 +124,10 @@ export default function ProductsPage() {
                   <span className="text-ink-500">Stock: {p.stock_quantity}</span>
                 </div>
                 <div className="flex items-center justify-between mt-3">
-                  <button
-                    className={`badge ${p.is_available ? 'badge-green' : 'badge-ink'}`}
-                    onClick={() => toggleAvailability(p)}
-                  >
-                    {p.is_available ? 'Available' : 'Hidden'}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <Toggle checked={p.is_available} onChange={(next) => toggleAvailability(p, next)} label="Available for sale" />
+                    <span className="text-xs font-semibold text-ink-500">{p.is_available ? 'Available' : 'Hidden'}</span>
+                  </div>
                   <div className="space-x-3">
                     <button className="text-brand-600 font-semibold text-sm hover:text-brand-700" onClick={() => openEdit(p.id)}>Edit</button>
                     <button className="text-brand-600 font-semibold text-sm hover:text-brand-700" onClick={() => setDeleteTarget(p)}>Delete</button>
@@ -162,12 +165,10 @@ export default function ProductsPage() {
                     <td>₹{p.price}</td>
                     <td>{p.stock_quantity}</td>
                     <td>
-                      <button
-                        className={`badge ${p.is_available ? 'badge-green' : 'badge-ink'}`}
-                        onClick={() => toggleAvailability(p)}
-                      >
-                        {p.is_available ? 'Available' : 'Hidden'}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <Toggle checked={p.is_available} onChange={(next) => toggleAvailability(p, next)} label="Available for sale" />
+                        <span className="text-xs font-semibold text-ink-500">{p.is_available ? 'Available' : 'Hidden'}</span>
+                      </div>
                     </td>
                     <td className="text-right space-x-3">
                       <button className="text-brand-600 font-semibold hover:text-brand-700" onClick={() => openEdit(p.id)}>Edit</button>
@@ -195,10 +196,12 @@ export default function ProductsPage() {
         <form id="product-form" onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="label">Category</label>
-            <select className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required>
-              <option value="">Select category…</option>
-              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+            <Select
+              value={form.category}
+              onChange={(v) => setForm({ ...form, category: v })}
+              placeholder="Select category…"
+              options={categories.map((c) => ({ value: c.id, label: c.name }))}
+            />
           </div>
           <div>
             <label className="label">Name</label>
@@ -222,8 +225,8 @@ export default function ProductsPage() {
               <input className="input" value={form.unit_label} onChange={(e) => setForm({ ...form, unit_label: e.target.value })} />
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <input type="checkbox" checked={form.is_available} onChange={(e) => setForm({ ...form, is_available: e.target.checked })} />
+          <div className="flex items-center gap-2.5">
+            <Toggle checked={form.is_available} onChange={(next) => setForm({ ...form, is_available: next })} label="Available for sale" />
             <label className="text-sm font-semibold text-ink-700">Available for sale</label>
           </div>
 
@@ -238,7 +241,7 @@ export default function ProductsPage() {
                 ))}
               </div>
               {/* capture="environment" opens the phone camera directly; users can still choose "Photo Library" from the same picker for gallery images */}
-              <input type="file" accept="image/*" capture="environment" onChange={handleImageUpload} className="text-sm" />
+              <FileInput accept="image/*" capture="environment" label="Add Photo" onChange={handleImageUpload} />
               <p className="text-xs text-ink-400 mt-1">Take a photo or choose from gallery.</p>
             </div>
           )}

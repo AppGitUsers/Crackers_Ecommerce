@@ -1,7 +1,17 @@
 import { useEffect, useState } from 'react'
 import { Plus, ImageOff, X } from 'lucide-react'
 import { OffersAPI, ProductsAPI } from '../../api/endpoints'
-import { Modal, ConfirmDialog, PageLoader } from '../../components/admin/ui.jsx'
+import { Modal, ConfirmDialog, PageLoader, Toggle, Select, FileInput } from '../../components/admin/ui.jsx'
+import { useToast } from '../../context/ToastContext.jsx'
+
+const OFFER_TYPE_OPTIONS = [
+  { value: 'buy_x_get_y', label: 'Buy X Get Y' },
+  { value: 'amount_discount', label: 'Spend ₹X, Get ₹Y Off/Free' },
+]
+const DISCOUNT_TYPE_OPTIONS = [
+  { value: 'flat_discount', label: 'Flat Rupee Discount' },
+  { value: 'free_products_worth', label: 'Free Products Worth ₹' },
+]
 
 const EMPTY_OFFER = {
   name: '', offer_type: 'buy_x_get_y', description: '', is_active: true, priority: 0,
@@ -53,6 +63,7 @@ function ProductMultiSelect({ label, products, selectedIds, onChange }) {
 }
 
 export default function OffersPage() {
+  const toast = useToast()
   const [offers, setOffers] = useState([])
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -133,9 +144,11 @@ export default function OffersPage() {
 
     if (editing) {
       await OffersAPI.update(editing.id, payload)
+      toast.success('Offer updated.')
       load()
     } else {
       const { data } = await OffersAPI.create(payload)
+      toast.success('Offer created — add a banner image to finish.')
       load()
       setEditing(data)
       return // keep the form open so a banner image can be attached
@@ -148,16 +161,18 @@ export default function OffersPage() {
     const file = e.target.files[0]
     if (!file) return
     await OffersAPI.uploadBannerImage(editing.id, file)
+    toast.success('Banner image uploaded.')
     refreshEditing(editing.id)
   }
 
-  async function toggleActive(offer) {
-    await OffersAPI.update(offer.id, { is_active: !offer.is_active })
+  async function toggleActive(offer, nextValue) {
+    await OffersAPI.update(offer.id, { is_active: nextValue })
     load()
   }
 
   async function handleDelete(id) {
     await OffersAPI.remove(id)
+    toast.success('Offer deleted.')
     load()
   }
 
@@ -188,12 +203,12 @@ export default function OffersPage() {
                     <h3 className="font-bold text-ink-900">{offer.name}</h3>
                     <span className="badge badge-ink capitalize">{offer.offer_type.replace(/_/g, ' ')}</span>
                   </div>
-                  <button
-                    onClick={() => toggleActive(offer)}
-                    className={`badge ${offer.is_active ? 'badge-green' : 'badge-ink'}`}
-                  >
-                    {offer.is_active ? 'Active' : 'Inactive'}
-                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`badge ${offer.is_active ? 'badge-green' : 'badge-ink'}`}>
+                      {offer.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                    <Toggle checked={offer.is_active} onChange={(next) => toggleActive(offer, next)} label="Offer active" />
+                  </div>
                 </div>
                 {offer.offer_type === 'buy_x_get_y' && offer.buy_x_get_y && (
                   <>
@@ -244,10 +259,7 @@ export default function OffersPage() {
           </div>
           <div>
             <label className="label">Type</label>
-            <select className="input" value={form.offer_type} onChange={(e) => setForm({ ...form, offer_type: e.target.value })}>
-              <option value="buy_x_get_y">Buy X Get Y</option>
-              <option value="amount_discount">Spend ₹X, Get ₹Y Off/Free</option>
-            </select>
+            <Select value={form.offer_type} onChange={(v) => setForm({ ...form, offer_type: v })} options={OFFER_TYPE_OPTIONS} />
           </div>
 
           {form.offer_type === 'buy_x_get_y' && (
@@ -273,16 +285,16 @@ export default function OffersPage() {
               />
 
               <div className="border-t border-sandal-200 pt-3">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
+                <label className="flex items-center gap-2.5">
+                  <Toggle
                     checked={customFreeProducts}
-                    onChange={(e) => {
-                      setCustomFreeProducts(e.target.checked)
-                      if (!e.target.checked) {
+                    onChange={(next) => {
+                      setCustomFreeProducts(next)
+                      if (!next) {
                         setForm({ ...form, buy_x_get_y: { ...form.buy_x_get_y, free_products: [] } })
                       }
                     }}
+                    label="Give a different free product than what's bought"
                   />
                   <span className="text-xs font-semibold text-ink-700">Give a different free product than what's bought</span>
                 </label>
@@ -311,11 +323,11 @@ export default function OffersPage() {
               </div>
               <div>
                 <label className="label">Discount Type</label>
-                <select className="input" value={form.amount_discount.discount_type}
-                  onChange={(e) => setForm({ ...form, amount_discount: { ...form.amount_discount, discount_type: e.target.value } })}>
-                  <option value="flat_discount">Flat Rupee Discount</option>
-                  <option value="free_products_worth">Free Products Worth ₹</option>
-                </select>
+                <Select
+                  value={form.amount_discount.discount_type}
+                  onChange={(v) => setForm({ ...form, amount_discount: { ...form.amount_discount, discount_type: v } })}
+                  options={DISCOUNT_TYPE_OPTIONS}
+                />
               </div>
               <div>
                 <label className="label">Value (₹)</label>
@@ -344,7 +356,7 @@ export default function OffersPage() {
                   <img src={editing.banner_image} className="w-full h-full object-cover" />
                 </div>
               )}
-              <input type="file" accept="image/*" onChange={handleImageUpload} className="text-sm" />
+              <FileInput accept="image/*" label="Upload Banner" onChange={handleImageUpload} />
               <p className="text-xs text-ink-400 mt-1">Shown behind the offer text in the storefront carousel.</p>
             </div>
           ) : (

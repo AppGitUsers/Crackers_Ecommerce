@@ -34,7 +34,7 @@ export const OffersAPI = {
 }
 
 export const OrdersAPI = {
-  checkout: (payload) => api.post('/orders/checkout/', payload),
+  checkout: (payload) => api.post('/orders/checkout/', payload, { skipErrorToast: true }),
   myOrders: (phone) => api.get('/orders/my-orders/', { params: { phone } }),
   invoiceByToken: (token) => api.get(`/orders/invoice/${token}/`),
   // admin
@@ -46,12 +46,12 @@ export const OrdersAPI = {
 
 // ---- Admin CRM only ----
 export const AuthAPI = {
-  login: (username, password) => api.post('/auth/login/', { username, password }),
+  login: (username, password) => api.post('/auth/login/', { username, password }, { skipErrorToast: true }),
   me: () => api.get('/auth/me/'),
   users: {
     list: () => api.get('/auth/users/'),
-    create: (data) => api.post('/auth/users/', data),
-    update: (id, data) => api.patch(`/auth/users/${id}/`, data),
+    create: (data) => api.post('/auth/users/', data, { skipErrorToast: true }),
+    update: (id, data) => api.patch(`/auth/users/${id}/`, data, { skipErrorToast: true }),
     remove: (id) => api.delete(`/auth/users/${id}/`),
   },
 }

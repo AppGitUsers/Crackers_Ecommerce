@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, CheckCircle2, Users } from 'lucide-react'
 import { StaffAPI } from '../../../api/endpoints'
 import { Modal, PageLoader, Empty } from '../../../components/admin/ui.jsx'
+import { useToast } from '../../../context/ToastContext.jsx'
 
 function monthLabel(year, month) {
   return new Date(year, month - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -26,6 +27,7 @@ function lastDayOfMonth(year, month) {
 }
 
 export default function PaymentsTab() {
+  const toast = useToast()
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth() + 1)
@@ -66,6 +68,7 @@ export default function PaymentsTab() {
         hours_worked: payTarget.hours_worked,
         notes: `Monthly salary for ${monthLabel(year, month)} — attendance ${payTarget.attendance_pct}%`,
       })
+      toast.success(`Payment of ₹${payTarget.calculated_salary.toLocaleString('en-IN')} recorded for ${payTarget.employee_name}.`)
       setPayTarget(null)
       load()
     } finally {

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, CheckCircle2, Minus, ChevronLeft, ChevronRight, Phone, ExternalLink } from 'lucide-react'
+import { Plus, CheckCircle2, Minus, Phone, ExternalLink } from 'lucide-react'
 import { CallsAPI } from '../../api/endpoints'
-import { Modal, PageLoader, Empty } from '../../components/admin/ui.jsx'
+import { Modal, PageLoader, Empty, FilterPills, Pagination, Select } from '../../components/admin/ui.jsx'
+import { useToast } from '../../context/ToastContext.jsx'
 
 const PAGE_SIZE = 20
 
@@ -13,6 +14,8 @@ const STATUS_OPTIONS = [
   { value: 'deal_closed', label: 'Deal Closed — Paid', color: 'bg-green-100 text-green-700' },
   { value: 'cancelled', label: 'Cancelled', color: 'bg-brand-50 text-brand-700' },
 ]
+
+const STATUS_FILTER_OPTIONS = [{ value: '', label: 'All' }, ...STATUS_OPTIONS.map((s) => ({ value: s.value, label: s.label }))]
 
 // A freshly logged call means someone actually dialled — "not called yet"
 // only makes sense for the auto-created placeholder row, not a manual entry.
@@ -31,6 +34,7 @@ function BoolIndicator({ value }) {
 }
 
 export default function CallsPage() {
+  const toast = useToast()
   const navigate = useNavigate()
   const [orders, setOrders] = useState([])
   const [count, setCount] = useState(0)
@@ -67,8 +71,6 @@ export default function CallsPage() {
     loadOrders(p)
   }
 
-  const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE))
-
   function loadHistory(orderId) {
     setHistoryLoading(true)
     CallsAPI.history(orderId)
@@ -101,6 +103,7 @@ export default function CallsPage() {
         was_called: true,
         was_answered: ['answered', 'deal_closed'].includes(logForm.status),
       })
+      toast.success('Call logged.')
       setShowLogForm(false)
       setLogForm(EMPTY_LOG_FORM)
       loadHistory(activeOrder.id)
@@ -116,22 +119,8 @@ export default function CallsPage() {
         <h1 className="page-title">Calls</h1>
       </div>
 
-      <div className="flex gap-2 flex-wrap mb-4">
-        <button
-          onClick={() => setStatusFilter('')}
-          className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${statusFilter === '' ? 'bg-brand-500 text-white border-brand-500' : 'bg-white border-sandal-300 text-ink-700'}`}
-        >
-          All
-        </button>
-        {STATUS_OPTIONS.map((s) => (
-          <button
-            key={s.value}
-            onClick={() => setStatusFilter(s.value)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${statusFilter === s.value ? 'bg-brand-500 text-white border-brand-500' : 'bg-white border-sandal-300 text-ink-700'}`}
-          >
-            {s.label}
-          </button>
-        ))}
+      <div className="mb-4">
+        <FilterPills options={STATUS_FILTER_OPTIONS} value={statusFilter} onChange={setStatusFilter} />
       </div>
 
       {loading ? (
@@ -197,31 +186,7 @@ export default function CallsPage() {
             </table>
           </div>
 
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
-              <p className="text-sm text-ink-400">
-                Page {page} of {totalPages} · {count} order{count === 1 ? '' : 's'}
-              </p>
-              <div className="flex items-center gap-2">
-                <button
-                  className="btn-secondary px-3 py-1.5"
-                  disabled={page <= 1}
-                  onClick={() => goToPage(page - 1)}
-                >
-                  <ChevronLeft size={16} />
-                  Prev
-                </button>
-                <button
-                  className="btn-secondary px-3 py-1.5"
-                  disabled={page >= totalPages}
-                  onClick={() => goToPage(page + 1)}
-                >
-                  Next
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-          )}
+          <Pagination page={page} count={count} pageSize={PAGE_SIZE} onChange={goToPage} itemLabel="order" />
         </>
       )}
 
@@ -260,9 +225,7 @@ export default function CallsPage() {
               <form id="log-call-form" onSubmit={submitNewCall} className="space-y-3 mb-4 p-3 rounded-lg bg-sandal-50 border border-sandal-200">
                 <div>
                   <label className="label">Call Outcome</label>
-                  <select className="input" value={logForm.status} onChange={(e) => setLogForm({ ...logForm, status: e.target.value })}>
-                    {LOG_STATUS_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-                  </select>
+                  <Select value={logForm.status} onChange={(v) => setLogForm({ ...logForm, status: v })} options={LOG_STATUS_OPTIONS} />
                 </div>
                 <div>
                   <label className="label">Notes</label>

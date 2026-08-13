@@ -1,6 +1,24 @@
 import axios from 'axios'
+import { getGlobalToast } from '../context/ToastContext.jsx'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+
+// Best-effort human-readable message out of a DRF error response — {detail: "..."},
+// {field: ["msg"]}, {non_field_errors: ["msg"]}, a plain string, or no response at all.
+function extractErrorMessage(error) {
+  if (!error.response) return 'Network error — check your connection and try again.'
+  const data = error.response.data
+  if (typeof data === 'string') return data
+  if (data && typeof data === 'object') {
+    if (data.detail) return data.detail
+    const firstKey = Object.keys(data)[0]
+    if (firstKey) {
+      const val = Array.isArray(data[firstKey]) ? data[firstKey][0] : data[firstKey]
+      return firstKey === 'non_field_errors' ? val : `${firstKey.replace(/_/g, ' ')}: ${val}`
+    }
+  }
+  return `Request failed (${error.response.status})`
+}
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -41,6 +59,13 @@ api.interceptors.response.use(
       }
       original.headers.Authorization = `Bearer ${localStorage.getItem('admin_access_token')}`
       return api(original)
+    }
+
+    // Safety net so a failed request is never silent — pages that already show
+    // their own inline error can opt out with { skipErrorToast: true } in the
+    // request config, to avoid showing the same failure twice.
+    if (error.response?.status !== 401 && !original?.skipErrorToast) {
+      getGlobalToast()?.error(extractErrorMessage(error))
     }
     return Promise.reject(error)
   }

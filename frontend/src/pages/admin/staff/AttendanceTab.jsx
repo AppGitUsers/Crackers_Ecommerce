@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { CalendarCheck, CheckCheck } from 'lucide-react'
 import { StaffAPI } from '../../../api/endpoints'
-import { Modal, ConfirmDialog, PageLoader, Empty } from '../../../components/admin/ui.jsx'
+import { Modal, ConfirmDialog, PageLoader, Empty, DatePicker, Select } from '../../../components/admin/ui.jsx'
+import { useToast } from '../../../context/ToastContext.jsx'
 
 const STATUS_META = {
   present: { label: 'Present', badge: 'badge-green' },
@@ -9,6 +10,7 @@ const STATUS_META = {
   half: { label: 'Half Day', badge: 'badge-gold' },
   leave: { label: 'On Leave', badge: 'badge-ink' },
 }
+const STATUS_OPTIONS = Object.entries(STATUS_META).map(([value, v]) => ({ value, label: v.label }))
 const NOT_MARKED = { label: 'Not Marked', badge: 'badge bg-sandal-100 text-ink-400' }
 
 function todayISO() {
@@ -16,6 +18,7 @@ function todayISO() {
 }
 
 export default function AttendanceTab() {
+  const toast = useToast()
   const [date, setDate] = useState(todayISO())
   const [records, setRecords] = useState([])
   const [employees, setEmployees] = useState([])
@@ -103,6 +106,7 @@ export default function AttendanceTab() {
       } else {
         await StaffAPI.attendance.create(payload)
       }
+      toast.success('Attendance saved.')
       setShowForm(false)
       load()
     } finally {
@@ -123,6 +127,7 @@ export default function AttendanceTab() {
         }
         return r.id ? StaffAPI.attendance.update(r.id, payload) : StaffAPI.attendance.create(payload)
       }))
+      toast.success(`Marked ${targets.length} employee${targets.length === 1 ? '' : 's'} present.`)
       setSelected(new Set())
       load()
     } finally {
@@ -138,7 +143,7 @@ export default function AttendanceTab() {
   return (
     <div>
       <div className="flex flex-wrap items-center gap-3 mb-4">
-        <input type="date" className="input w-auto" value={date} onChange={(e) => setDate(e.target.value)} />
+        <DatePicker value={date} onChange={setDate} className="w-auto" />
         <span className="badge badge-green">Present: {presentCount}</span>
         <span className="badge bg-red-100 text-red-700">Absent: {absentCount}</span>
         <span className="badge badge-ink">Other: {otherCount}</span>
@@ -273,9 +278,7 @@ export default function AttendanceTab() {
           <form id="attendance-form" onSubmit={handleSubmit} className="space-y-3">
             <div>
               <label className="label">Status</label>
-              <select className="select" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-                {Object.entries(STATUS_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-              </select>
+              <Select value={form.status} onChange={(v) => setForm({ ...form, status: v })} options={STATUS_OPTIONS} />
             </div>
             {['present', 'half'].includes(form.status) && (
               <div className="grid grid-cols-2 gap-3">

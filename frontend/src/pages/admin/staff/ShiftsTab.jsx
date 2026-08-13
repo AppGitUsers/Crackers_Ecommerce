@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Plus, Clock } from 'lucide-react'
 import { StaffAPI } from '../../../api/endpoints'
-import { Modal, ConfirmDialog, PageLoader, Empty } from '../../../components/admin/ui.jsx'
+import { Modal, ConfirmDialog, PageLoader, Empty, Toggle } from '../../../components/admin/ui.jsx'
+import { useToast } from '../../../context/ToastContext.jsx'
 
 const ALL_DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
 const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI']
@@ -12,6 +13,7 @@ const EMPTY_FORM = {
 }
 
 export default function ShiftsTab() {
+  const toast = useToast()
   const [shifts, setShifts] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -46,8 +48,10 @@ export default function ShiftsTab() {
     e.preventDefault()
     if (editing) {
       await StaffAPI.shifts.update(editing.id, form)
+      toast.success('Shift updated.')
     } else {
       await StaffAPI.shifts.create(form)
+      toast.success('Shift created.')
     }
     setShowForm(false)
     load()
@@ -55,6 +59,7 @@ export default function ShiftsTab() {
 
   async function handleDelete(id) {
     await StaffAPI.shifts.remove(id)
+    toast.success('Shift deleted.')
     load()
   }
 
@@ -197,8 +202,8 @@ export default function ShiftsTab() {
             <label className="label">Notes</label>
             <textarea className="input" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           </div>
-          <div className="flex items-center gap-2">
-            <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
+          <div className="flex items-center gap-2.5">
+            <Toggle checked={form.is_active} onChange={(next) => setForm({ ...form, is_active: next })} label="Active" />
             <label className="text-sm font-semibold text-ink-700">Active</label>
           </div>
         </form>

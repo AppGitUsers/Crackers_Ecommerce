@@ -1,136 +1,147 @@
 import { useEffect, useState } from 'react'
-import { Plus, Settings as SettingsIcon } from 'lucide-react'
+import { Plus, Trash2, Save, CheckCircle2 } from 'lucide-react'
 import { SettingsAPI } from '../../api/endpoints'
-import { Modal, ConfirmDialog, PageLoader, Empty } from '../../components/admin/ui.jsx'
+import { ConfirmDialog, PageLoader, Empty } from '../../components/admin/ui.jsx'
+import { useToast } from '../../context/ToastContext.jsx'
 
-const EMPTY_FORM = { key: '', value: '' }
+function humanizeKey(key) {
+  return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
 
 export default function SettingsPage() {
+  const toast = useToast()
   const [settings, setSettings] = useState([])
+  const [values, setValues] = useState({})
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [editing, setEditing] = useState(null)
-  const [form, setForm] = useState(EMPTY_FORM)
+  const [saving, setSaving] = useState(false)
+  const [justSaved, setJustSaved] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [addingNew, setAddingNew] = useState(false)
+  const [newKey, setNewKey] = useState('')
+  const [newValue, setNewValue] = useState('')
 
   function load() {
     setLoading(true)
-    SettingsAPI.list().then(({ data }) => setSettings(data.results || data)).finally(() => setLoading(false))
+    SettingsAPI.list()
+      .then(({ data }) => {
+        const list = data.results || data
+        setSettings(list)
+        setValues(Object.fromEntries(list.map((s) => [s.id, s.value])))
+      })
+      .finally(() => setLoading(false))
   }
 
   useEffect(() => { load() }, [])
 
-  function openCreate() {
-    setEditing(null)
-    setForm(EMPTY_FORM)
-    setShowForm(true)
-  }
-
-  function openEdit(setting) {
-    setEditing(setting)
-    setForm({ key: setting.key, value: setting.value })
-    setShowForm(true)
-  }
-
-  async function handleSubmit(e) {
+  async function handleSaveAll(e) {
     e.preventDefault()
-    if (editing) {
-      await SettingsAPI.update(editing.id, { value: form.value })
-    } else {
-      await SettingsAPI.create(form)
+    setSaving(true)
+    try {
+      const changed = settings.filter((s) => (values[s.id] ?? '') !== s.value)
+      await Promise.all(changed.map((s) => SettingsAPI.update(s.id, { value: values[s.id] })))
+      setJustSaved(true)
+      setTimeout(() => setJustSaved(false), 2500)
+      load()
+    } finally {
+      setSaving(false)
     }
-    setShowForm(false)
+  }
+
+  async function handleAddNew(e) {
+    e.preventDefault()
+    await SettingsAPI.create({ key: newKey.trim(), value: newValue })
+    toast.success('Setting added.')
+    setNewKey('')
+    setNewValue('')
+    setAddingNew(false)
     load()
   }
 
   async function handleDelete(id) {
     await SettingsAPI.remove(id)
+    toast.success('Setting deleted.')
     load()
   }
 
+  if (loading) return <PageLoader />
+
   return (
-    <div>
+    <div className="max-w-2xl">
       <div className="page-header">
         <div>
           <h1 className="page-title">Settings</h1>
-          <p className="page-subtitle">Company details shown on invoices. Add a new row for any new setting you need.</p>
+          <p className="page-subtitle">Company details shown on invoices.</p>
         </div>
-        <button className="btn-primary" onClick={openCreate}>
-          <Plus size={16} />
-          New Setting
-        </button>
       </div>
 
-      {loading ? (
-        <PageLoader />
-      ) : settings.length === 0 ? (
-        <Empty message="No settings yet" icon={<SettingsIcon size={32} />} />
+      {settings.length === 0 ? (
+        <Empty message="No settings yet — add your first one below." />
       ) : (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:hidden">
-            {settings.map((s) => (
-              <div key={s.id} className="card p-4 cursor-pointer" onClick={() => openEdit(s)}>
-                <p className="text-xs font-semibold text-ink-400 uppercase tracking-wide">{s.key}</p>
-                <p className="text-sm text-ink-900 mt-1 break-words">{s.value || <span className="text-ink-300">Not set</span>}</p>
+        <form onSubmit={handleSaveAll} className="card p-5 space-y-4">
+          {settings.map((s) => (
+            <div key={s.id} className="flex items-end gap-2">
+              <div className="flex-1 min-w-0">
+                <label className="label">{humanizeKey(s.key)}</label>
+                <input
+                  className="input"
+                  value={values[s.id] ?? ''}
+                  onChange={(e) => setValues((v) => ({ ...v, [s.id]: e.target.value }))}
+                  placeholder={`Enter ${humanizeKey(s.key).toLowerCase()}`}
+                />
               </div>
-            ))}
-          </div>
+              <button
+                type="button"
+                className="btn-ghost text-brand-600 hover:bg-brand-50 shrink-0"
+                onClick={() => setDeleteTarget(s)}
+                title={`Remove "${s.key}"`}
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          ))}
 
-          <div className="table-container hidden lg:block">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Key</th>
-                  <th>Value</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {settings.map((s) => (
-                  <tr key={s.id}>
-                    <td className="font-semibold text-ink-900">{s.key}</td>
-                    <td className="text-ink-700">{s.value || <span className="text-ink-300">Not set</span>}</td>
-                    <td className="text-right space-x-3">
-                      <button className="text-brand-600 font-semibold hover:text-brand-700" onClick={() => openEdit(s)}>Edit</button>
-                      <button className="text-brand-600 font-semibold hover:text-brand-700" onClick={() => setDeleteTarget(s)}>Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
-
-      <Modal
-        open={showForm}
-        onClose={() => setShowForm(false)}
-        title={editing ? `Edit "${editing.key}"` : 'New Setting'}
-        footer={
-          <>
-            <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
-            <button type="submit" form="setting-form" className="btn-primary">Save</button>
-          </>
-        }
-      >
-        <form id="setting-form" onSubmit={handleSubmit} className="space-y-3">
-          <div>
-            <label className="label">Key</label>
-            <input
-              className="input"
-              value={form.key}
-              onChange={(e) => setForm({ ...form, key: e.target.value })}
-              disabled={!!editing}
-              placeholder="e.g. company_address"
-              required
-            />
-          </div>
-          <div>
-            <label className="label">Value</label>
-            <textarea className="input" value={form.value} onChange={(e) => setForm({ ...form, value: e.target.value })} />
+          <div className="flex items-center gap-3 pt-3 border-t border-sandal-200">
+            <button type="submit" className="btn-primary" disabled={saving}>
+              <Save size={16} />
+              {saving ? 'Saving…' : 'Save Changes'}
+            </button>
+            {justSaved && (
+              <span className="inline-flex items-center gap-1.5 text-sm text-green-600 font-semibold">
+                <CheckCircle2 size={16} />
+                Saved
+              </span>
+            )}
           </div>
         </form>
-      </Modal>
+      )}
+
+      <div className="card p-5 mt-4">
+        {addingNew ? (
+          <form onSubmit={handleAddNew} className="flex flex-wrap items-end gap-3">
+            <div className="flex-1 min-w-[180px]">
+              <label className="label">Key</label>
+              <input
+                className="input"
+                value={newKey}
+                onChange={(e) => setNewKey(e.target.value)}
+                placeholder="e.g. bank_account_number"
+                required
+              />
+            </div>
+            <div className="flex-1 min-w-[180px]">
+              <label className="label">Value</label>
+              <input className="input" value={newValue} onChange={(e) => setNewValue(e.target.value)} />
+            </div>
+            <button type="submit" className="btn-primary">Add</button>
+            <button type="button" className="btn-secondary" onClick={() => setAddingNew(false)}>Cancel</button>
+          </form>
+        ) : (
+          <button className="btn-outline" onClick={() => setAddingNew(true)}>
+            <Plus size={16} />
+            Add New Setting
+          </button>
+        )}
+      </div>
 
       <ConfirmDialog
         open={!!deleteTarget}

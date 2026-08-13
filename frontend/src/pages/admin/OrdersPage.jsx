@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { OrdersAPI } from '../../api/endpoints'
-import { PageLoader } from '../../components/admin/ui.jsx'
+import { PageLoader, FilterPills, Pagination } from '../../components/admin/ui.jsx'
 
 const PAGE_SIZE = 20
 
@@ -19,6 +19,15 @@ const PAYMENT_COLORS = {
   failed: 'bg-brand-50 text-brand-700',
   refunded: 'bg-ink-100 text-ink-500',
 }
+
+const STATUS_FILTER_OPTIONS = [
+  { value: '', label: 'All' },
+  { value: 'received', label: 'Received' },
+  { value: 'packed', label: 'Packed' },
+  { value: 'out_for_delivery', label: 'Out for Delivery' },
+  { value: 'delivered', label: 'Delivered' },
+  { value: 'cancelled', label: 'Cancelled' },
+]
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState([])
@@ -49,16 +58,14 @@ export default function OrdersPage() {
     load(p)
   }
 
-  const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE))
-
   return (
     <div>
       <div className="page-header">
         <h1 className="page-title">Orders</h1>
       </div>
 
-      <div className="flex flex-wrap gap-3 mb-4">
-        <div className="relative max-w-xs w-full">
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="relative w-full sm:w-64">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
           <input
             className="input pl-9"
@@ -68,15 +75,12 @@ export default function OrdersPage() {
             onKeyDown={(e) => e.key === 'Enter' && goToPage(1)}
           />
         </div>
-        <select className="input w-52" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-          <option value="">All (excl. Cancelled)</option>
-          <option value="received">Received</option>
-          <option value="packed">Packed</option>
-          <option value="out_for_delivery">Out for Delivery</option>
-          <option value="delivered">Delivered</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
         <button className="btn-secondary" onClick={() => goToPage(1)}>Search</button>
+      </div>
+
+      <div className="mb-4">
+        <FilterPills options={STATUS_FILTER_OPTIONS} value={statusFilter} onChange={setStatusFilter} />
+        {statusFilter === '' && <p className="text-xs text-ink-400 mt-1.5">Cancelled orders are hidden from "All" — filter by Cancelled to see them.</p>}
       </div>
 
       {loading ? (
@@ -144,31 +148,7 @@ export default function OrdersPage() {
             </table>
           </div>
 
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
-              <p className="text-sm text-ink-400">
-                Page {page} of {totalPages} · {count} order{count === 1 ? '' : 's'}
-              </p>
-              <div className="flex items-center gap-2">
-                <button
-                  className="btn-secondary px-3 py-1.5"
-                  disabled={page <= 1}
-                  onClick={() => goToPage(page - 1)}
-                >
-                  <ChevronLeft size={16} />
-                  Prev
-                </button>
-                <button
-                  className="btn-secondary px-3 py-1.5"
-                  disabled={page >= totalPages}
-                  onClick={() => goToPage(page + 1)}
-                >
-                  Next
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-          )}
+          <Pagination page={page} count={count} pageSize={PAGE_SIZE} onChange={goToPage} itemLabel="order" />
         </>
       )}
     </div>
