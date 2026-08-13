@@ -68,7 +68,16 @@
       "Bash(taskkill //PID 8840 //F)",
       "Bash(node smoke_bulk.mjs)",
       "Bash(taskkill //PID 1696 //F)",
-      "Bash(taskkill //PID 16508 //F)"
+      "Bash(taskkill //PID 16508 //F)",
+      "Bash(./venv/Scripts/python.exe -m pip install reportlab)",
+      "Bash(./venv/Scripts/python.exe manage.py makemigrations settings)",
+      "Bash(./venv/Scripts/python.exe manage.py makemigrations site_settings)",
+      "Bash(./venv/Scripts/python.exe manage.py showmigrations orders)",
+      "Bash(node smoke_invoice.mjs)",
+      "Bash(node smoke_public_invoice.mjs)",
+      "Bash(taskkill //PID 6956 //F)",
+      "Bash(taskkill //PID 17076 //F)",
+      "Bash(taskkill //PID 2208 //F)"
     ],
     "additionalDirectories": [
       "C:\\Users\\HP-PC\\AppData\\Local\\Temp\\claude\\d--Projects-crackers-ecommerce\\e843e00f-8d54-4843-b3a1-79a32bd0142a\\scratchpad\\pw\\shots",

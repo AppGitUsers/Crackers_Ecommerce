@@ -7,6 +7,7 @@ import CartPage from './pages/storefront/CartPage.jsx'
 import CheckoutPage from './pages/storefront/CheckoutPage.jsx'
 import OrderSuccessPage from './pages/storefront/OrderSuccessPage.jsx'
 import MyOrdersPage from './pages/storefront/MyOrdersPage.jsx'
+import InvoicePage from './pages/storefront/InvoicePage.jsx'
 
 // Admin
 import AdminLoginPage from './pages/admin/AdminLoginPage.jsx'
@@ -21,6 +22,7 @@ import OffersPage from './pages/admin/OffersPage.jsx'
 import FinancePage from './pages/admin/FinancePage.jsx'
 import CallsPage from './pages/admin/CallsPage.jsx'
 import StaffPage from './pages/admin/staff/StaffPage.jsx'
+import SettingsPage from './pages/admin/SettingsPage.jsx'
 
 export default function App() {
   return (
@@ -32,6 +34,7 @@ export default function App() {
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/order-success/:orderNumber" element={<OrderSuccessPage />} />
         <Route path="/my-orders" element={<MyOrdersPage />} />
+        <Route path="/invoice/:token" element={<InvoicePage />} />
       </Route>
 
       {/* ---------- Admin CRM ---------- */}
@@ -53,6 +56,7 @@ export default function App() {
         <Route path="finance" element={<FinancePage />} />
         <Route path="calls" element={<CallsPage />} />
         <Route path="staff" element={<StaffPage />} />
+        <Route path="settings" element={<SettingsPage />} />
       </Route>
     </Routes>
   )

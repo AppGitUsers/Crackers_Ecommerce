@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "apps.calls",
     "apps.finance",
     "apps.staff",
+    "apps.settings",
     "apps.core",
 ]
 

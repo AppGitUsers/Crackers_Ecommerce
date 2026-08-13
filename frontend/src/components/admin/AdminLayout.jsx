@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard, FolderTree, PartyPopper, Package, Tag, Wallet, Phone, Users, LogOut, Menu, X,
+  LayoutDashboard, FolderTree, PartyPopper, Package, Tag, Wallet, Phone, Users, Settings, LogOut, Menu, X,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { ConfirmDialog } from './ui.jsx'
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { to: '/admin/finance', label: 'Finance', icon: Wallet },
   { to: '/admin/calls', label: 'Calls', icon: Phone },
   { to: '/admin/staff', label: 'Staff', icon: Users },
+  { to: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 
 export default function AdminLayout() {

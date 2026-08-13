@@ -1,3 +1,5 @@
+import uuid
+
 from django.conf import settings
 from django.db import models, transaction
 from django.utils import timezone
@@ -44,6 +46,9 @@ class Order(models.Model):
         REFUNDED = "refunded", "Refunded"
 
     order_number = models.CharField(max_length=20, unique=True, default=generate_order_number, editable=False)
+    # Capability token for the public, no-login invoice link sent over WhatsApp —
+    # knowing this UUID is what grants access, not who's asking.
+    share_token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     customer = models.ForeignKey(Customer, on_delete=models.PROTECT, related_name="orders")
 
     # denormalized "current" fields for fast list/filter — full timeline lives in OrderStatusHistory

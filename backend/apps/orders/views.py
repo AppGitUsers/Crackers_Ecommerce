@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from django.db import transaction
 from django.db.models import F
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes, action
@@ -14,7 +15,9 @@ from apps.customers.models import Customer
 from apps.finance.models import Transaction as FinanceTransaction
 from apps.products.models import Product
 from apps.offers.services import evaluate_cart_offers
+from apps.settings.services import get_settings_dict
 
+from .invoice import build_invoice_pdf
 from .models import Order, OrderItem, OrderStatusHistory
 from .serializers import (
     OrderListSerializer, OrderDetailSerializer, CheckoutSerializer, MyOrdersLookupSerializer,
@@ -109,6 +112,29 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
                     },
                 )
         return Response(OrderDetailSerializer(order, context={"request": request}).data)
+
+    @action(detail=True, methods=["get"], url_path="download-invoice")
+    def download_invoice(self, request, pk=None):
+        """GET /api/orders/{id}/download-invoice/ — admin-only PDF download."""
+        order = self.get_object()
+        pdf_bytes = build_invoice_pdf(order)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="invoice_{order.order_number}.pdf"'
+        return response
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def invoice_by_token(request, token):
+    """
+    GET /api/orders/invoice/<token>/
+    Public, no-login invoice view — the token itself (from the order's
+    share_token, sent to the customer over WhatsApp) is what grants access.
+    """
+    order = get_object_or_404(Order.objects.select_related("customer").prefetch_related("items"), share_token=token)
+    data = OrderDetailSerializer(order, context={"request": request}).data
+    data["company"] = get_settings_dict()
+    return Response(data)
 
 
 @api_view(["POST"])

@@ -36,10 +36,12 @@ export const OffersAPI = {
 export const OrdersAPI = {
   checkout: (payload) => api.post('/orders/checkout/', payload),
   myOrders: (phone) => api.get('/orders/my-orders/', { params: { phone } }),
+  invoiceByToken: (token) => api.get(`/orders/invoice/${token}/`),
   // admin
   list: (params) => api.get('/orders/', { params }),
   detail: (id) => api.get(`/orders/${id}/`),
   updateStatus: (id, payload) => api.post(`/orders/${id}/update-status/`, payload),
+  downloadInvoice: (id) => api.get(`/orders/${id}/download-invoice/`, { responseType: 'blob' }),
 }
 
 // ---- Admin CRM only ----
@@ -86,6 +88,13 @@ export const FinanceAPI = {
 
 export const DashboardAPI = {
   overview: (days = 30) => api.get('/dashboard/overview/', { params: { days } }),
+}
+
+export const SettingsAPI = {
+  list: (params) => api.get('/settings/', { params }),
+  create: (data) => api.post('/settings/', data),
+  update: (id, data) => api.patch(`/settings/${id}/`, data),
+  remove: (id) => api.delete(`/settings/${id}/`),
 }
 
 export const StaffAPI = {

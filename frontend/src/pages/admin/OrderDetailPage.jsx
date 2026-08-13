@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Download, MessageCircle } from 'lucide-react'
 import { OrdersAPI } from '../../api/endpoints'
 import { PageLoader, ConfirmDialog } from '../../components/admin/ui.jsx'
 
@@ -13,18 +13,63 @@ const PAYMENT_OPTIONS = ['pending', 'paid', 'failed', 'refunded']
 // get a confirmation step instead of applying on a single click.
 const CONFIRM_REQUIRED = { fulfillment: ['cancelled'], payment: ['refunded'] }
 
+// wa.me needs a bare international-format number (no +, no leading 0) — this
+// project's customer phones are stored as plain 10-digit Indian numbers, so
+// assume the +91 country code unless one's already present.
+function toWhatsAppNumber(phone) {
+  const digits = (phone || '').replace(/\D/g, '')
+  if (digits.length === 10) return `91${digits}`
+  return digits
+}
+
 export default function OrderDetailPage() {
   const { id } = useParams()
   const [order, setOrder] = useState(null)
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [confirmAction, setConfirmAction] = useState(null)
+  const [downloading, setDownloading] = useState(false)
 
   function load() {
     OrdersAPI.detail(id).then(({ data }) => setOrder(data))
   }
 
   useEffect(() => { load() }, [id])
+
+  async function handleDownloadInvoice() {
+    setDownloading(true)
+    try {
+      const { data } = await OrdersAPI.downloadInvoice(id)
+      const url = URL.createObjectURL(new Blob([data], { type: 'application/pdf' }))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `invoice_${order.order_number}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  function handleWhatsAppShare() {
+    const shareLink = `${window.location.origin}/invoice/${order.share_token}`
+    const lines = [
+      `Hi ${order.customer.name}, here's your invoice for order *${order.order_number}*.`,
+      '',
+      `Total: ₹${order.total_amount}`,
+      Number(order.discount_amount) > 0 ? `Discount applied: ₹${order.discount_amount}` : null,
+      '',
+      `View full invoice: ${shareLink}`,
+      '',
+      'Thank you for shopping with us!',
+    ].filter(Boolean).join('\n')
+
+    const waNumber = toWhatsAppNumber(order.customer.phone)
+    const url = `https://wa.me/${waNumber}?text=${encodeURIComponent(lines)}`
+    window.open(url, '_blank')
+  }
 
   async function updateStatus(statusType, statusValue) {
     setSaving(true)
@@ -68,9 +113,24 @@ export default function OrderDetailPage() {
         <ArrowLeft size={15} />
         Back to Orders
       </Link>
-      <div className="flex flex-wrap items-center justify-between gap-2 mt-2 mb-6">
-        <h1 className="page-title">{order.order_number}</h1>
-        <span className="text-ink-400 text-sm">{new Date(order.created_at).toLocaleString()}</span>
+      <div className="flex flex-wrap items-center justify-between gap-3 mt-2 mb-6">
+        <div>
+          <h1 className="page-title">{order.order_number}</h1>
+          <span className="text-ink-400 text-sm">{new Date(order.created_at).toLocaleString()}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="btn-secondary" onClick={handleDownloadInvoice} disabled={downloading}>
+            <Download size={16} />
+            {downloading ? 'Downloading…' : 'Download Invoice'}
+          </button>
+          <button
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-semibold transition-colors"
+            onClick={handleWhatsAppShare}
+          >
+            <MessageCircle size={16} />
+            WhatsApp
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
