@@ -1,13 +1,32 @@
-import uuid
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
+from django.utils import timezone
 
 from apps.customers.models import Customer
 from apps.products.models import Product
 
 
+class OrderNumberSequence(models.Model):
+    """
+    One row per calendar day; last_number is how many orders have been
+    issued that day. generate_order_number() locks this row with
+    select_for_update() so two checkouts landing in the same second still
+    serialize and get distinct, gapless numbers instead of colliding.
+    """
+    date = models.DateField(unique=True)
+    last_number = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.date} -> {self.last_number}"
+
+
 def generate_order_number():
-    return f"ORD-{uuid.uuid4().hex[:8].upper()}"
+    today = timezone.localdate()
+    with transaction.atomic():
+        seq, _ = OrderNumberSequence.objects.select_for_update().get_or_create(date=today)
+        seq.last_number += 1
+        seq.save(update_fields=["last_number"])
+    return f"ORD{today.strftime('%Y%m%d')}{seq.last_number:04d}"
 
 
 class Order(models.Model):

@@ -40,7 +40,10 @@
       "Bash(./venv/Scripts/python.exe manage.py backfill_call_logs)",
       "Bash(./venv/Scripts/python.exe manage.py shell -c ' *)",
       "Bash(./venv/Scripts/python.exe manage.py makemigrations calls)",
-      "Bash(./venv/Scripts/python.exe manage.py migrate calls)"
+      "Bash(./venv/Scripts/python.exe manage.py migrate calls)",
+      "Bash(./venv/Scripts/python.exe manage.py makemigrations orders)",
+      "Bash(./venv/Scripts/python.exe manage.py migrate orders)",
+      "Bash(./venv/Scripts/python.exe manage.py backfill_order_numbers)"
     ],
     "additionalDirectories": [
       "C:\\Users\\HP-PC\\AppData\\Local\\Temp\\claude\\d--Projects-crackers-ecommerce\\e843e00f-8d54-4843-b3a1-79a32bd0142a\\scratchpad\\pw\\shots",
