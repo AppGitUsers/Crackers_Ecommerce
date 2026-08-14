@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, Outlet } from 'react-router-dom'
-import { Sparkles, Phone, Package, ShoppingCart, ShieldCheck, PhoneCall } from 'lucide-react'
+import { Sparkles, Package, ShoppingCart, ShieldCheck, PhoneCall } from 'lucide-react'
 import { OffersAPI } from '../../api/endpoints'
 import { useCart } from '../../context/CartContext'
 import OfferBanner from './OfferBanner.jsx'
+import SearchBar from './SearchBar.jsx'
 
 export default function StorefrontLayout() {
   const [offers, setOffers] = useState([])
@@ -52,10 +53,7 @@ export default function StorefrontLayout() {
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-2 bg-white/10 text-sky-300 text-xs font-semibold px-3 py-1.5 rounded-full">
-            <Phone size={13} />
-            We confirm every order by phone call
-          </div>
+          <SearchBar />
 
           <nav className="flex items-center gap-2 sm:gap-3 shrink-0">
             <Link to="/my-orders" className="flex items-center gap-1.5 text-sandal-100 hover:text-white text-sm font-semibold transition-colors px-2">

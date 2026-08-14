@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   Sparkles, BadgeCheck, Phone, LayoutGrid, ShieldCheck,
-  ShoppingBag, ClipboardCheck, PhoneCall, Award, MapPin, Star, ImageOff,
+  ShoppingBag, ClipboardCheck, PhoneCall, Award, MapPin, Star, ImageOff, X,
 } from 'lucide-react'
 import { CategoriesAPI, ProductsAPI } from '../../api/endpoints'
 import ProductCard from '../../components/storefront/ProductCard.jsx'
@@ -72,6 +73,8 @@ export default function HomePage() {
   const [products, setProducts] = useState([])
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const query = searchParams.get('q') || ''
 
   useEffect(() => {
     CategoriesAPI.list().then(({ data }) => setCategories(data.results || data))
@@ -79,11 +82,22 @@ export default function HomePage() {
 
   useEffect(() => {
     setLoading(true)
-    const params = selectedCategory ? { category: selectedCategory } : {}
+    // An active search takes over from category browsing entirely — it's
+    // meant as "show me exactly what matches this text", not stacked with
+    // whatever category happened to be selected before.
+    const params = query ? { search: query } : selectedCategory ? { category: selectedCategory } : {}
     ProductsAPI.list(params)
       .then(({ data }) => setProducts(data.results || data))
       .finally(() => setLoading(false))
-  }, [selectedCategory])
+  }, [selectedCategory, query])
+
+  function clearSearch() {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.delete('q')
+      return next
+    })
+  }
 
   // Group the current product list by category (in the category's own
   // display order) instead of one flat grid — a category with no products
@@ -144,7 +158,20 @@ export default function HomePage() {
         </div>
       </section>
 
-      {categories.length > 0 && (
+      {query && (
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 bg-sandal-50 border border-sandal-200 rounded-xl px-4 py-3">
+          <p className="text-sm text-ink-700">
+            Search results for <span className="font-bold text-ink-900">"{query}"</span>
+            {!loading && <span className="text-ink-400"> · {products.length} found</span>}
+          </p>
+          <button onClick={clearSearch} className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-700">
+            <X size={13} />
+            Clear search
+          </button>
+        </div>
+      )}
+
+      {!query && categories.length > 0 && (
         <Reveal className="mb-10">
           <div className="flex items-center gap-3 pb-2 mb-4 border-b border-sandal-200">
             <span className="w-1 h-5 rounded-full bg-gradient-to-b from-brand-500 to-sky-500 shrink-0" />
@@ -204,7 +231,9 @@ export default function HomePage() {
           </div>
         </div>
       ) : products.length === 0 ? (
-        <div className="text-center py-16 text-ink-400">No products found in this category.</div>
+        <div className="text-center py-16 text-ink-400">
+          {query ? `No products found for "${query}".` : 'No products found in this category.'}
+        </div>
       ) : (
         <div className="space-y-10">
           {sections.map(({ category, products: categoryProducts }) => (

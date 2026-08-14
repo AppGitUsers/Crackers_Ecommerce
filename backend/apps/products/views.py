@@ -12,13 +12,23 @@ class ProductViewSet(viewsets.ModelViewSet):
     permission_classes = [ReadOnlyOrAdminCRM]
     parser_classes = [MultiPartParser, FormParser]
     filterset_fields = ["category", "is_available"]
-    search_fields = ["name", "description"]
     ordering_fields = ["price", "created_at", "stock_quantity"]
 
     def get_queryset(self):
         qs = Product.objects.select_related("category").prefetch_related("images")
         if not (self.request.user and self.request.user.is_authenticated):
             qs = qs.filter(is_available=True, category__is_active=True)
+
+        # Handled manually rather than via DRF's SearchFilter: SearchFilter
+        # splits the query on whitespace and requires each word to match
+        # independently, which makes a multi-word product name (e.g. "Ashoka
+        # Chakkar") impossible to match against itself — every word after the
+        # first fails since "name" can't start with two different strings at
+        # once. The storefront search bar just wants "products starting with
+        # exactly what was typed", so match the whole (unsplit) string.
+        search = self.request.query_params.get("search")
+        if search:
+            qs = qs.filter(name__istartswith=search)
         return qs
 
     def get_serializer_class(self):
