@@ -1,7 +1,7 @@
 import { ImageOff } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, priority = false }) {
   const { items, addItem, setQuantity } = useCart()
   const cartLine = items.find((i) => i.product_id === product.id)
 
@@ -15,6 +15,8 @@ export default function ProductCard({ product }) {
           <img
             src={product.primary_image}
             alt={product.name}
+            loading={priority ? 'eager' : 'lazy'}
+            decoding="async"
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (

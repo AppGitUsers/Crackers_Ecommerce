@@ -1,12 +1,18 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   Sparkles, BadgeCheck, Phone, LayoutGrid, ShieldCheck,
-  ShoppingBag, ClipboardCheck, PhoneCall, Award, MapPin, Star, ImageOff, X,
+  ShoppingBag, ClipboardCheck, PhoneCall, Award, MapPin, Star, ImageOff, X, ArrowRight,
 } from 'lucide-react'
 import { CategoriesAPI, ProductsAPI } from '../../api/endpoints'
 import ProductCard from '../../components/storefront/ProductCard.jsx'
 import { useReveal } from '../../hooks/useReveal'
+
+// How many products to show per category on the "browse everything" preview —
+// a bounded, one-shot fetch, not the infinite-scroll feed. Picking a single
+// category (or searching) is what switches into the real infinite-scroll grid.
+const PREVIEW_SIZE = 8
+const PAGE_SIZE = 20
 
 // Evergreen, always-true value props (no fabricated stats like "127 sold
 // today") — shown as arch-shaped cards anchored over the hero's wave edge.
@@ -42,6 +48,8 @@ const DUO_THEMES = [
   { dark: 'bg-gold-600', iconBg: 'bg-gold-400', light: 'bg-gold-500/10', lightText: 'text-gold-600' },
 ]
 
+const GRID_CLASSES = 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4'
+
 function ProductCardSkeleton() {
   return (
     <div className="card p-4 flex flex-col">
@@ -49,6 +57,14 @@ function ProductCardSkeleton() {
       <div className="skeleton h-4 w-3/4 mb-2" />
       <div className="skeleton h-3 w-1/2 mb-3" />
       <div className="skeleton h-9 w-full mt-auto" />
+    </div>
+  )
+}
+
+function SkeletonGrid({ count = 8 }) {
+  return (
+    <div className={GRID_CLASSES}>
+      {Array.from({ length: count }).map((_, i) => <ProductCardSkeleton key={i} />)}
     </div>
   )
 }
@@ -70,26 +86,104 @@ function Reveal({ children, className = '' }) {
 
 export default function HomePage() {
   const [categories, setCategories] = useState([])
-  const [products, setProducts] = useState([])
   const [selectedCategory, setSelectedCategory] = useState(null)
-  const [loading, setLoading] = useState(true)
   const [searchParams, setSearchParams] = useSearchParams()
   const query = searchParams.get('q') || ''
+
+  // "Flat mode" = a single category picked, or a search in progress — both
+  // are a single growing feed of results, infinite-scrolled. The default
+  // "everything, grouped by category" browse view is a separate, bounded
+  // fetch (see below) — the two don't share fetch/pagination state because
+  // they're fundamentally different shapes of data.
+  const flatMode = !!selectedCategory || !!query
+
+  // ---- Mode A: browse-everything preview (bounded, no infinite scroll) ----
+  const [previewSections, setPreviewSections] = useState([])
+  const [previewLoading, setPreviewLoading] = useState(true)
+
+  // ---- Mode B: flat infinite-scroll feed (single category or search) ----
+  const [flatProducts, setFlatProducts] = useState([])
+  const [flatPage, setFlatPage] = useState(1)
+  const [flatHasMore, setFlatHasMore] = useState(true)
+  const [flatLoading, setFlatLoading] = useState(true)
+  const [flatLoadingMore, setFlatLoadingMore] = useState(false)
+  const sentinelRef = useRef(null)
 
   useEffect(() => {
     CategoriesAPI.list().then(({ data }) => setCategories(data.results || data))
   }, [])
 
+  // Mode A fetch: one small request per category, run in parallel.
   useEffect(() => {
-    setLoading(true)
-    // An active search takes over from category browsing entirely — it's
-    // meant as "show me exactly what matches this text", not stacked with
-    // whatever category happened to be selected before.
-    const params = query ? { search: query } : selectedCategory ? { category: selectedCategory } : {}
+    if (flatMode || categories.length === 0) return
+    let cancelled = false
+    setPreviewLoading(true)
+    Promise.all(
+      categories.map((cat) =>
+        ProductsAPI.list({ category: cat.id, page_size: PREVIEW_SIZE }).then(({ data }) => ({
+          category: cat,
+          products: data.results || data,
+        }))
+      )
+    )
+      .then((results) => { if (!cancelled) setPreviewSections(results.filter((r) => r.products.length > 0)) })
+      .finally(() => { if (!cancelled) setPreviewLoading(false) })
+    return () => { cancelled = true }
+  }, [flatMode, categories])
+
+  // Mode B fetch: page 1, resets whenever the category or search changes.
+  useEffect(() => {
+    if (!flatMode) return
+    let cancelled = false
+    setFlatProducts([])
+    setFlatPage(1)
+    setFlatHasMore(true)
+    setFlatLoading(true)
+    const params = query
+      ? { search: query, page_size: PAGE_SIZE }
+      : { category: selectedCategory, page_size: PAGE_SIZE }
     ProductsAPI.list(params)
-      .then(({ data }) => setProducts(data.results || data))
-      .finally(() => setLoading(false))
-  }, [selectedCategory, query])
+      .then(({ data }) => {
+        if (cancelled) return
+        setFlatProducts(data.results || data)
+        setFlatHasMore(!!data.next)
+      })
+      .finally(() => { if (!cancelled) setFlatLoading(false) })
+    return () => { cancelled = true }
+  }, [flatMode, selectedCategory, query])
+
+  function loadMoreFlat() {
+    if (flatLoadingMore || !flatHasMore) return
+    setFlatLoadingMore(true)
+    const nextPage = flatPage + 1
+    const params = query
+      ? { search: query, page_size: PAGE_SIZE, page: nextPage }
+      : { category: selectedCategory, page_size: PAGE_SIZE, page: nextPage }
+    ProductsAPI.list(params)
+      .then(({ data }) => {
+        setFlatProducts((prev) => [...prev, ...(data.results || data)])
+        setFlatHasMore(!!data.next)
+        setFlatPage(nextPage)
+      })
+      .finally(() => setFlatLoadingMore(false))
+  }
+
+  // Watches a sentinel element below the grid — once it's within 400px of
+  // the viewport, fetch the next page. rootMargin means this fires a beat
+  // before the user actually hits bottom, so the next batch is usually
+  // already loading by the time they'd notice a gap.
+  useEffect(() => {
+    if (!flatMode || flatLoading) return
+    const el = sentinelRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) loadMoreFlat() },
+      { rootMargin: '400px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flatMode, flatLoading, flatHasMore, flatLoadingMore, flatPage, query, selectedCategory])
 
   function clearSearch() {
     setSearchParams((prev) => {
@@ -99,20 +193,10 @@ export default function HomePage() {
     })
   }
 
-  // Group the current product list by category (in the category's own
-  // display order) instead of one flat grid — a category with no products
-  // in the current view is simply skipped, so this works the same whether
-  // "All" or a single category is selected.
-  const sections = useMemo(() => {
-    const byCategory = new Map()
-    for (const product of products) {
-      if (!byCategory.has(product.category)) byCategory.set(product.category, [])
-      byCategory.get(product.category).push(product)
-    }
-    return categories
-      .filter((cat) => byCategory.has(cat.id))
-      .map((cat) => ({ category: cat, products: byCategory.get(cat.id) }))
-  }, [products, categories])
+  const selectedCategoryObj = useMemo(
+    () => categories.find((c) => c.id === selectedCategory) || null,
+    [categories, selectedCategory]
+  )
 
   return (
     <div className="pb-20 xl:pb-0">
@@ -162,7 +246,7 @@ export default function HomePage() {
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6 bg-sandal-50 border border-sandal-200 rounded-xl px-4 py-3">
           <p className="text-sm text-ink-700">
             Search results for <span className="font-bold text-ink-900">"{query}"</span>
-            {!loading && <span className="text-ink-400"> · {products.length} found</span>}
+            {!flatLoading && <span className="text-ink-400"> · {flatProducts.length}{flatHasMore ? '+' : ''} found</span>}
           </p>
           <button onClick={clearSearch} className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-700">
             <X size={13} />
@@ -206,7 +290,7 @@ export default function HomePage() {
                 >
                   <div className="aspect-square bg-gradient-to-br from-sandal-50 to-sandal-100 flex items-center justify-center">
                     {cat.image ? (
-                      <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
+                      <img src={cat.image} alt={cat.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                     ) : (
                       <ImageOff size={24} className="text-sandal-400" strokeWidth={1.5} />
                     )}
@@ -224,35 +308,74 @@ export default function HomePage() {
         </Reveal>
       )}
 
-      {loading ? (
-        <div className="space-y-10">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
-            {Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)}
+      {flatMode ? (
+        // ---- Mode B: single category or search — one flat, infinite-scroll grid ----
+        flatLoading ? (
+          <SkeletonGrid />
+        ) : flatProducts.length === 0 ? (
+          <div className="text-center py-16 text-ink-400">
+            {query ? `No products found for "${query}".` : 'No products found in this category.'}
           </div>
-        </div>
-      ) : products.length === 0 ? (
-        <div className="text-center py-16 text-ink-400">
-          {query ? `No products found for "${query}".` : 'No products found in this category.'}
-        </div>
+        ) : (
+          <div>
+            {!query && selectedCategoryObj && (
+              <div className="flex items-center gap-3 pb-2 mb-4 border-b border-sandal-200">
+                <span className="w-1 h-5 rounded-full bg-gradient-to-b from-brand-500 to-sky-500 shrink-0" />
+                <h2 className="text-lg font-extrabold text-ink-900">{selectedCategoryObj.name}</h2>
+              </div>
+            )}
+            <div className={GRID_CLASSES}>
+              {flatProducts.map((product, i) => (
+                <ProductCard key={product.id} product={product} priority={i < 6} />
+              ))}
+            </div>
+            {flatLoadingMore && (
+              <div className={`${GRID_CLASSES} mt-4`}>
+                {Array.from({ length: 4 }).map((_, i) => <ProductCardSkeleton key={i} />)}
+              </div>
+            )}
+            {/* Invisible trigger — IntersectionObserver watches this, not the page's scroll position directly. */}
+            <div ref={sentinelRef} className="h-1" />
+          </div>
+        )
       ) : (
-        <div className="space-y-10">
-          {sections.map(({ category, products: categoryProducts }) => (
-            <Reveal key={category.id}>
-              <section>
-                <div className="flex items-center gap-3 pb-2 mb-4 border-b border-sandal-200">
-                  <span className="w-1 h-5 rounded-full bg-gradient-to-b from-brand-500 to-sky-500 shrink-0" />
-                  <h2 className="text-lg font-extrabold text-ink-900">{category.name}</h2>
-                  <span className="text-xs font-semibold text-ink-400">{categoryProducts.length} item{categoryProducts.length === 1 ? '' : 's'}</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
-                  {categoryProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
-              </section>
-            </Reveal>
-          ))}
-        </div>
+        // ---- Mode A: everything, grouped by category, capped preview per section ----
+        previewLoading ? (
+          <div className="space-y-10">
+            <SkeletonGrid count={6} />
+          </div>
+        ) : previewSections.length === 0 ? (
+          <div className="text-center py-16 text-ink-400">No products found.</div>
+        ) : (
+          <div className="space-y-10">
+            {previewSections.map(({ category, products: categoryProducts }) => (
+              <Reveal key={category.id}>
+                <section>
+                  <div className="flex items-center justify-between gap-3 pb-2 mb-4 border-b border-sandal-200">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="w-1 h-5 rounded-full bg-gradient-to-b from-brand-500 to-sky-500 shrink-0" />
+                      <h2 className="text-lg font-extrabold text-ink-900 truncate">{category.name}</h2>
+                    </div>
+                    {(category.product_count ?? categoryProducts.length) > categoryProducts.length && (
+                      <button
+                        onClick={() => setSelectedCategory(category.id)}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700 shrink-0"
+                      >
+                        View all
+                        <ArrowRight size={13} />
+                      </button>
+                    )}
+                  </div>
+                  <div className={GRID_CLASSES}>
+                    {categoryProducts.map((product, i) => (
+                      <ProductCard key={product.id} product={product} priority={i < 6} />
+                    ))}
+                  </div>
+                </section>
+              </Reveal>
+            ))}
+          </div>
+        )
       )}
 
       <Reveal className="mt-16">
@@ -295,7 +418,7 @@ export default function HomePage() {
                     Fixed aspect ratio keeps this boundary level across every card. */}
                 <div className="aspect-[4/3] shrink-0 bg-sandal-100 flex items-center justify-center border-b border-sandal-200">
                   {item.image ? (
-                    <img src={item.image} alt={item.label} className="w-full h-full object-cover" />
+                    <img src={item.image} alt={item.label} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                   ) : (
                     <ImageOff size={22} className="text-sandal-400" strokeWidth={1.5} />
                   )}
