@@ -19,6 +19,7 @@ export default function SettingsPage() {
   const [justSaved, setJustSaved] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [addingNew, setAddingNew] = useState(false)
+  const [addingSaving, setAddingSaving] = useState(false)
   const [newKey, setNewKey] = useState('')
   const [newValue, setNewValue] = useState('')
 
@@ -48,6 +49,7 @@ export default function SettingsPage() {
   useEffect(() => { load(); loadCatalogue() }, [])
 
   function handleCatalogueFileChange(e) {
+    if (catalogueUploading) return
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
@@ -87,12 +89,18 @@ export default function SettingsPage() {
 
   async function handleAddNew(e) {
     e.preventDefault()
-    await SettingsAPI.create({ key: newKey.trim(), value: newValue })
-    toast.success('Setting added.')
-    setNewKey('')
-    setNewValue('')
-    setAddingNew(false)
-    load()
+    if (addingSaving) return
+    setAddingSaving(true)
+    try {
+      await SettingsAPI.create({ key: newKey.trim(), value: newValue })
+      toast.success('Setting added.')
+      setNewKey('')
+      setNewValue('')
+      setAddingNew(false)
+      load()
+    } finally {
+      setAddingSaving(false)
+    }
   }
 
   async function handleDelete(id) {
@@ -170,7 +178,7 @@ export default function SettingsPage() {
               <label className="label">Value</label>
               <input className="input" value={newValue} onChange={(e) => setNewValue(e.target.value)} />
             </div>
-            <button type="submit" className="btn-primary">Add</button>
+            <button type="submit" className="btn-primary" disabled={addingSaving}>{addingSaving ? 'Adding…' : 'Add'}</button>
             <button type="button" className="btn-secondary" onClick={() => setAddingNew(false)}>Cancel</button>
           </form>
         ) : (
@@ -217,8 +225,9 @@ export default function SettingsPage() {
               onChange={handleCatalogueFileChange}
               accept=".xlsx,.xls,.csv"
               label={catalogueUploading ? 'Uploading…' : 'Replace'}
+              disabled={catalogueUploading}
             />
-            <button type="button" className="btn-ghost text-brand-600 hover:bg-brand-50" onClick={() => setCatalogueRemoveConfirm(true)}>
+            <button type="button" className="btn-ghost text-brand-600 hover:bg-brand-50" disabled={catalogueUploading} onClick={() => setCatalogueRemoveConfirm(true)}>
               <Trash2 size={16} />
             </button>
           </div>
@@ -227,6 +236,7 @@ export default function SettingsPage() {
             onChange={handleCatalogueFileChange}
             accept=".xlsx,.xls,.csv"
             label={catalogueUploading ? 'Uploading…' : 'Upload Catalogue'}
+            disabled={catalogueUploading}
           />
         )}
       </div>

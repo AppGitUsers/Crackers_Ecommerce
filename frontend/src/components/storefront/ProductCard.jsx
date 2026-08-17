@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { ImageOff } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 
@@ -7,6 +8,18 @@ export default function ProductCard({ product, priority = false }) {
 
   const inCartQty = cartLine?.quantity || 0
   const [intPart, decPart] = Number(product.price).toFixed(2).split('.')
+
+  // A fast double-tap on touch devices can fire two click events before
+  // React re-renders the button into the quantity stepper — this ref-based
+  // lock (checked synchronously, unlike state) blocks the second one from
+  // adding an unintended extra unit.
+  const addLockRef = useRef(false)
+  function handleAdd() {
+    if (addLockRef.current) return
+    addLockRef.current = true
+    addItem(product, 1)
+    setTimeout(() => { addLockRef.current = false }, 400)
+  }
 
   return (
     <div className="group card p-4 flex flex-col transition-all duration-300 hover:shadow-elevated hover:-translate-y-0.5">
@@ -59,7 +72,7 @@ export default function ProductCard({ product, priority = false }) {
       ) : (
         <button
           className="group relative mt-3 h-12 w-full active:scale-95 transition-transform"
-          onClick={() => addItem(product, 1)}
+          onClick={handleAdd}
         >
           {/* The whole wave-topped shelf is the button, not just an icon on it */}
           <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 48" preserveAspectRatio="none" aria-hidden="true">

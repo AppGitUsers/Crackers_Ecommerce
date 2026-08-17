@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Gift, ArrowLeft } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
@@ -11,6 +11,10 @@ export default function CheckoutPage() {
   const [form, setForm] = useState({ name: '', phone: '', address: '', city: '', pincode: '' })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  // Synchronous lock, checked before the `submitting` state (and its re-render)
+  // has landed — belt-and-suspenders against a fast double-click/tap placing
+  // two orders, since this button creates a real order.
+  const submittingRef = useRef(false)
 
   const [offers, setOffers] = useState([])
   const [products, setProducts] = useState([])
@@ -76,11 +80,13 @@ export default function CheckoutPage() {
 
   async function handleSubmit(e) {
     e.preventDefault()
+    if (submittingRef.current) return
     setError('')
     if (!form.name.trim() || !form.phone.trim()) {
       setError('Name and phone number are required.')
       return
     }
+    submittingRef.current = true
     setSubmitting(true)
     try {
       const payload = {
@@ -96,6 +102,7 @@ export default function CheckoutPage() {
       navigate(`/order-success/${data.order_number}`, { state: { order: data } })
     } catch (err) {
       setError(err.response?.data?.detail || 'Something went wrong placing your order. Please try again.')
+      submittingRef.current = false
     } finally {
       setSubmitting(false)
     }

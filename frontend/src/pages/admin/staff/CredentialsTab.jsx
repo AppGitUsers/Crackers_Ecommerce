@@ -33,6 +33,7 @@ export default function CredentialsTab() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [saving, setSaving] = useState(false)
 
   function load() {
     setLoading(true)
@@ -66,6 +67,7 @@ export default function CredentialsTab() {
 
   async function handleSubmit(e) {
     e.preventDefault()
+    if (saving) return
     setError('')
 
     if (!editing || form.password) {
@@ -85,6 +87,7 @@ export default function CredentialsTab() {
     }
     if (form.password) payload.password = form.password
 
+    setSaving(true)
     try {
       if (editing) {
         await AuthAPI.users.update(editing.id, payload)
@@ -97,6 +100,8 @@ export default function CredentialsTab() {
       load()
     } catch (err) {
       setError(err.response?.data?.detail || 'Could not save this login. Check the fields and try again.')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -191,7 +196,7 @@ export default function CredentialsTab() {
         footer={
           <>
             <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
-            <button type="submit" form="credential-form" className="btn-primary">Save</button>
+            <button type="submit" form="credential-form" className="btn-primary" disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
           </>
         }
       >

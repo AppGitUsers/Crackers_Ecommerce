@@ -71,6 +71,9 @@ export default function OffersPage() {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY_OFFER)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [uploadingBanner, setUploadingBanner] = useState(false)
+  const [togglingIds, setTogglingIds] = useState(new Set())
   // Collapsed by default — "buy X get Y" almost always means Y of the same
   // product you bought, which is already the backend's default when
   // free_products is empty. Only expand this (and let the admin pick a
@@ -135,39 +138,61 @@ export default function OffersPage() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    const payload = {
-      name: form.name, offer_type: form.offer_type, description: form.description,
-      is_active: form.is_active, priority: form.priority,
-    }
-    if (form.offer_type === 'buy_x_get_y') payload.buy_x_get_y = form.buy_x_get_y
-    if (form.offer_type === 'amount_discount') payload.amount_discount = form.amount_discount
+    if (saving) return
+    setSaving(true)
+    try {
+      const payload = {
+        name: form.name, offer_type: form.offer_type, description: form.description,
+        is_active: form.is_active, priority: form.priority,
+      }
+      if (form.offer_type === 'buy_x_get_y') payload.buy_x_get_y = form.buy_x_get_y
+      if (form.offer_type === 'amount_discount') payload.amount_discount = form.amount_discount
 
-    if (editing) {
-      await OffersAPI.update(editing.id, payload)
-      toast.success('Offer updated.')
-      load()
-    } else {
-      const { data } = await OffersAPI.create(payload)
-      toast.success('Offer created — add a banner image to finish.')
-      load()
-      setEditing(data)
-      return // keep the form open so a banner image can be attached
+      if (editing) {
+        await OffersAPI.update(editing.id, payload)
+        toast.success('Offer updated.')
+        load()
+      } else {
+        const { data } = await OffersAPI.create(payload)
+        toast.success('Offer created — add a banner image to finish.')
+        load()
+        setEditing(data)
+        return // keep the form open so a banner image can be attached
+      }
+      setShowForm(false)
+    } finally {
+      setSaving(false)
     }
-    setShowForm(false)
   }
 
   async function handleImageUpload(e) {
-    if (!editing) return
+    if (!editing || uploadingBanner) return
     const file = e.target.files[0]
+    e.target.value = ''
     if (!file) return
-    await OffersAPI.uploadBannerImage(editing.id, file)
-    toast.success('Banner image uploaded.')
-    refreshEditing(editing.id)
+    setUploadingBanner(true)
+    try {
+      await OffersAPI.uploadBannerImage(editing.id, file)
+      toast.success('Banner image uploaded.')
+      refreshEditing(editing.id)
+    } finally {
+      setUploadingBanner(false)
+    }
   }
 
   async function toggleActive(offer, nextValue) {
-    await OffersAPI.update(offer.id, { is_active: nextValue })
-    load()
+    if (togglingIds.has(offer.id)) return
+    setTogglingIds((prev) => new Set(prev).add(offer.id))
+    try {
+      await OffersAPI.update(offer.id, { is_active: nextValue })
+      load()
+    } finally {
+      setTogglingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(offer.id)
+        return next
+      })
+    }
   }
 
   async function handleDelete(id) {
@@ -207,7 +232,7 @@ export default function OffersPage() {
                     <span className={`badge ${offer.is_active ? 'badge-green' : 'badge-ink'}`}>
                       {offer.is_active ? 'Active' : 'Inactive'}
                     </span>
-                    <Toggle checked={offer.is_active} onChange={(next) => toggleActive(offer, next)} label="Offer active" />
+                    <Toggle checked={offer.is_active} disabled={togglingIds.has(offer.id)} onChange={(next) => toggleActive(offer, next)} label="Offer active" />
                   </div>
                 </div>
                 {offer.offer_type === 'buy_x_get_y' && offer.buy_x_get_y && (
@@ -248,7 +273,7 @@ export default function OffersPage() {
         footer={
           <>
             <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Close</button>
-            <button type="submit" form="offer-form" className="btn-primary">Save Offer</button>
+            <button type="submit" form="offer-form" className="btn-primary" disabled={saving}>{saving ? 'Saving…' : 'Save Offer'}</button>
           </>
         }
       >
@@ -356,7 +381,12 @@ export default function OffersPage() {
                   <img src={editing.banner_image} className="w-full h-full object-cover" />
                 </div>
               )}
-              <FileInput accept="image/*" label="Upload Banner" onChange={handleImageUpload} />
+              <FileInput
+                accept="image/*"
+                label={uploadingBanner ? 'Uploading…' : 'Upload Banner'}
+                disabled={uploadingBanner}
+                onChange={handleImageUpload}
+              />
               <p className="text-xs text-ink-400 mt-1">Shown behind the offer text in the storefront carousel.</p>
             </div>
           ) : (

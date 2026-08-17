@@ -28,6 +28,7 @@ export default function EmployeesTab({ onOpenCalendar }) {
   const [form, setForm] = useState(EMPTY_FORM)
   const [photoFile, setPhotoFile] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [saving, setSaving] = useState(false)
 
   function load() {
     setLoading(true)
@@ -65,19 +66,25 @@ export default function EmployeesTab({ onOpenCalendar }) {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    const fd = new FormData()
-    Object.entries(form).forEach(([k, v]) => fd.append(k, v))
-    if (photoFile) fd.append('photo', photoFile)
+    if (saving) return
+    setSaving(true)
+    try {
+      const fd = new FormData()
+      Object.entries(form).forEach(([k, v]) => fd.append(k, v))
+      if (photoFile) fd.append('photo', photoFile)
 
-    if (editing) {
-      await StaffAPI.employees.update(editing.id, fd)
-      toast.success('Employee updated.')
-    } else {
-      await StaffAPI.employees.create(fd)
-      toast.success('Employee added.')
+      if (editing) {
+        await StaffAPI.employees.update(editing.id, fd)
+        toast.success('Employee updated.')
+      } else {
+        await StaffAPI.employees.create(fd)
+        toast.success('Employee added.')
+      }
+      setShowForm(false)
+      load()
+    } finally {
+      setSaving(false)
     }
-    setShowForm(false)
-    load()
   }
 
   async function handleDelete(id) {
@@ -162,7 +169,7 @@ export default function EmployeesTab({ onOpenCalendar }) {
         footer={
           <>
             <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
-            <button type="submit" form="employee-form" className="btn-primary">Save</button>
+            <button type="submit" form="employee-form" className="btn-primary" disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
           </>
         }
       >

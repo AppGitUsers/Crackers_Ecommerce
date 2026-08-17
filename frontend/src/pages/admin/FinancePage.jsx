@@ -111,6 +111,7 @@ export default function FinancePage() {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [exporting, setExporting] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   const { from, to } = useMemo(() => monthBounds(monthStart), [monthStart])
   const monthLabel = monthStart.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
@@ -143,13 +144,19 @@ export default function FinancePage() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    await FinanceAPI.create(form)
-    toast.success('Transaction recorded.')
-    setForm(EMPTY_FORM)
-    setShowForm(false)
-    goToTxPage(1)
-    FinanceAPI.summary({ from, to }).then(({ data }) => setSummary(data))
-    FinanceAPI.trend(6).then(({ data }) => setTrend(data))
+    if (saving) return
+    setSaving(true)
+    try {
+      await FinanceAPI.create(form)
+      toast.success('Transaction recorded.')
+      setForm(EMPTY_FORM)
+      setShowForm(false)
+      goToTxPage(1)
+      FinanceAPI.summary({ from, to }).then(({ data }) => setSummary(data))
+      FinanceAPI.trend(6).then(({ data }) => setTrend(data))
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function handleExport() {
@@ -297,7 +304,7 @@ export default function FinancePage() {
         footer={
           <>
             <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
-            <button type="submit" form="finance-transaction-form" className="btn-primary">Save</button>
+            <button type="submit" form="finance-transaction-form" className="btn-primary" disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
           </>
         }
       >

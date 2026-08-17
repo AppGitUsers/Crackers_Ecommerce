@@ -302,16 +302,21 @@ export function DatePicker({ value, onChange, disabled = false, className = '', 
 /** Styled trigger for a native file input — the raw "Choose File" button is
  * OS-rendered and clashes with everything else. Caller still owns the picked
  * File in its own state (pass its .name back in as `fileName`). */
-export function FileInput({ onChange, accept = 'image/*', capture, label = 'Choose File', fileName, className = '' }) {
+export function FileInput({ onChange, accept = 'image/*', capture, label = 'Choose File', fileName, className = '', disabled = false }) {
   const inputRef = useRef(null)
   return (
     <div className={`flex items-center gap-3 ${className}`}>
-      <button type="button" className="btn-secondary btn-sm" onClick={() => inputRef.current?.click()}>
+      <button
+        type="button"
+        className="btn-secondary btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={disabled}
+        onClick={() => inputRef.current?.click()}
+      >
         <Upload size={14} />
         {label}
       </button>
       <span className="text-xs text-ink-500 truncate">{fileName || 'No file chosen'}</span>
-      <input ref={inputRef} type="file" accept={accept} capture={capture} className="hidden" onChange={onChange} />
+      <input ref={inputRef} type="file" accept={accept} capture={capture} className="hidden" disabled={disabled} onChange={onChange} />
     </div>
   )
 }
