@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import ReadOnlyOrAdminCRM
+from apps.settings.services import get_bool_setting
 from .models import Product, ProductImage, CatalogueFile
 from .serializers import (
     ProductListSerializer, ProductDetailSerializer, ProductImageSerializer, CatalogueFileSerializer,
@@ -61,6 +62,9 @@ class ProductViewSet(viewsets.ModelViewSet):
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
         ctx["request"] = self.request
+        # Fetched once per request/list here (not per product in the serializer)
+        # to avoid a settings query per row.
+        ctx["reduce_stock"] = get_bool_setting("reduce_stock")
         return ctx
 
     @action(detail=True, methods=["post"], parser_classes=[MultiPartParser, FormParser])

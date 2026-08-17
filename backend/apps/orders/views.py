@@ -15,7 +15,7 @@ from apps.customers.models import Customer
 from apps.finance.models import Transaction as FinanceTransaction
 from apps.products.models import Product
 from apps.offers.services import evaluate_cart_offers
-from apps.settings.services import get_settings_dict
+from apps.settings.services import get_settings_dict, get_bool_setting
 
 from .invoice import build_invoice_pdf
 from .models import Order, OrderItem, OrderStatusHistory
@@ -190,9 +190,16 @@ def checkout(request):
     for ci in cart_items:
         total_qty_needed[ci["product"].id] = total_qty_needed.get(ci["product"].id, 0) + ci["quantity"]
 
+    # Fetched once, up front — with the toggle off, stock_quantity is never
+    # checked or decremented anywhere below (infinite stock assumed); only
+    # is_available (the admin's manual per-product switch) still applies.
+    reduce_stock = get_bool_setting("reduce_stock")
+
     for product_id, needed_qty in total_qty_needed.items():
         product = products[product_id]
-        if not product.in_stock or product.stock_quantity < needed_qty:
+        if not product.is_available:
+            return Response({"detail": f"'{product.name}' is no longer available."}, status=400)
+        if reduce_stock and product.stock_quantity < needed_qty:
             free_note = " (including free units from an active offer)" if free_qty_by_product.get(product_id) else ""
             return Response(
                 {"detail": f"'{product.name}' doesn't have enough stock{free_note} (need {needed_qty}, available {product.stock_quantity})."},
@@ -240,8 +247,9 @@ def checkout(request):
                 subtotal=Decimal("0.00"),
             )
 
-        for product_id, needed_qty in total_qty_needed.items():
-            Product.objects.filter(id=product_id).update(stock_quantity=F("stock_quantity") - needed_qty)
+        if reduce_stock:
+            for product_id, needed_qty in total_qty_needed.items():
+                Product.objects.filter(id=product_id).update(stock_quantity=F("stock_quantity") - needed_qty)
 
         OrderStatusHistory.objects.create(
             order=order, status_type="fulfillment", status=Order.FulfillmentStatus.RECEIVED,

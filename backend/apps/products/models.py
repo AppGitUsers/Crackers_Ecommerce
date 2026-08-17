@@ -34,9 +34,20 @@ class Product(models.Model):
             self.slug = slug
         super().save(*args, **kwargs)
 
-    @property
-    def in_stock(self):
-        return self.is_available and self.stock_quantity > 0
+    def is_in_stock(self, reduce_stock):
+        """
+        Whether the storefront should treat this product as orderable.
+        `reduce_stock` is the site-wide "Settings > Reduce Stock" toggle,
+        passed in rather than looked up here so callers control when that
+        query happens (once per request, not once per product) — see
+        apps.settings.services.get_bool_setting.
+        With the toggle off, stock_quantity is ignored entirely (infinite
+        stock assumed); is_available (the admin's manual per-product switch)
+        always still applies either way.
+        """
+        if not self.is_available:
+            return False
+        return self.stock_quantity > 0 if reduce_stock else True
 
     def __str__(self):
         return self.name

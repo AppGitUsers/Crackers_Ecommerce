@@ -13,6 +13,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     """Lean serializer for the storefront grid & admin product list — no heavy nested data."""
     category_name = serializers.CharField(source="category.name", read_only=True)
     primary_image = serializers.SerializerMethodField()
+    in_stock = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -29,11 +30,15 @@ class ProductListSerializer(serializers.ModelSerializer):
         url = img.image.url
         return request.build_absolute_uri(url) if request else url
 
+    def get_in_stock(self, obj):
+        return obj.is_in_stock(self.context.get("reduce_stock", False))
+
 
 class ProductDetailSerializer(serializers.ModelSerializer):
     """Full serializer — product detail page & admin edit form."""
     images = ProductImageSerializer(many=True, read_only=True)
     category_name = serializers.CharField(source="category.name", read_only=True)
+    in_stock = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -43,6 +48,9 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             "images", "created_at", "updated_at",
         ]
         read_only_fields = ["id", "slug", "created_at", "updated_at"]
+
+    def get_in_stock(self, obj):
+        return obj.is_in_stock(self.context.get("reduce_stock", False))
 
 
 class CatalogueFileSerializer(serializers.ModelSerializer):

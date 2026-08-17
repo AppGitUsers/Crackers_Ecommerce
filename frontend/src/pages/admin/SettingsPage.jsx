@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Plus, Trash2, Save, CheckCircle2, FileSpreadsheet, Download } from 'lucide-react'
+import { Plus, Trash2, Save, CheckCircle2, FileSpreadsheet, Download, PackageSearch } from 'lucide-react'
 import { SettingsAPI, CatalogueAPI } from '../../api/endpoints'
-import { ConfirmDialog, PageLoader, Empty, FileInput } from '../../components/admin/ui.jsx'
+import { ConfirmDialog, PageLoader, Empty, FileInput, Toggle } from '../../components/admin/ui.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 
 const CATALOGUE_ALLOWED_EXTENSIONS = ['xlsx', 'xls', 'csv']
+// Rendered as its own dedicated Toggle card below, not as a raw text row in
+// the generic key/value list — a free-text input is too easy to fat-finger
+// into something that doesn't parse as a boolean.
+const REDUCE_STOCK_KEY = 'reduce_stock'
 
 function humanizeKey(key) {
   return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
@@ -27,6 +31,11 @@ export default function SettingsPage() {
   const [catalogueLoading, setCatalogueLoading] = useState(true)
   const [catalogueUploading, setCatalogueUploading] = useState(false)
   const [catalogueRemoveConfirm, setCatalogueRemoveConfirm] = useState(false)
+
+  const [reduceStockToggling, setReduceStockToggling] = useState(false)
+  const visibleSettings = settings.filter((s) => s.key !== REDUCE_STOCK_KEY)
+  const reduceStockSetting = settings.find((s) => s.key === REDUCE_STOCK_KEY)
+  const reduceStockOn = reduceStockSetting?.value?.trim().toLowerCase() === 'true'
 
   function load() {
     setLoading(true)
@@ -109,6 +118,22 @@ export default function SettingsPage() {
     load()
   }
 
+  async function handleToggleReduceStock(next) {
+    if (reduceStockToggling) return
+    setReduceStockToggling(true)
+    try {
+      if (reduceStockSetting) {
+        await SettingsAPI.update(reduceStockSetting.id, { value: next ? 'True' : 'False' })
+      } else {
+        await SettingsAPI.create({ key: REDUCE_STOCK_KEY, value: next ? 'True' : 'False' })
+      }
+      toast.success(next ? 'Stock will now be reduced per order.' : 'Stock will no longer be reduced — treated as unlimited.')
+      load()
+    } finally {
+      setReduceStockToggling(false)
+    }
+  }
+
   if (loading) return <PageLoader />
 
   return (
@@ -120,11 +145,34 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {settings.length === 0 ? (
+      <div className="card p-5 mb-4">
+        <div className="flex items-center gap-2 mb-1">
+          <PackageSearch size={18} className="text-brand-600" />
+          <h2 className="font-bold text-ink-900">Stock Management</h2>
+        </div>
+        <div className="flex items-center justify-between gap-3 mt-3">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-ink-900">Reduce stock on order</p>
+            <p className="text-xs text-ink-500 mt-0.5">
+              {reduceStockOn
+                ? 'On — placing an order reduces each product\'s stock count, and it goes unavailable at 0.'
+                : 'Off — stock counts are ignored everywhere; every available product is treated as always in stock.'}
+            </p>
+          </div>
+          <Toggle
+            checked={reduceStockOn}
+            disabled={reduceStockToggling}
+            onChange={handleToggleReduceStock}
+            label="Reduce stock on order"
+          />
+        </div>
+      </div>
+
+      {visibleSettings.length === 0 ? (
         <Empty message="No settings yet — add your first one below." />
       ) : (
         <form onSubmit={handleSaveAll} className="card p-5 space-y-4">
-          {settings.map((s) => (
+          {visibleSettings.map((s) => (
             <div key={s.id} className="flex items-end gap-2">
               <div className="flex-1 min-w-0">
                 <label className="label">{humanizeKey(s.key)}</label>
