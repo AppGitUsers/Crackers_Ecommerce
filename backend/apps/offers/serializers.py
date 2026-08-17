@@ -13,6 +13,14 @@ class AmountDiscountOfferSerializer(serializers.ModelSerializer):
         model = AmountDiscountOffer
         fields = ["id", "min_purchase_amount", "discount_type", "discount_value", "applicable_products"]
 
+    def validate(self, attrs):
+        discount_type = attrs.get("discount_type") or getattr(self.instance, "discount_type", None)
+        discount_value = attrs.get("discount_value")
+        if discount_type == AmountDiscountOffer.DiscountType.PERCENTAGE_DISCOUNT and discount_value is not None:
+            if not (0 < discount_value <= 100):
+                raise serializers.ValidationError({"discount_value": "Percentage must be between 0 and 100."})
+        return attrs
+
 
 class OfferSerializer(serializers.ModelSerializer):
     buy_x_get_y = BuyXGetYOfferSerializer(required=False)

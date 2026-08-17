@@ -41,6 +41,17 @@ export function getUnlockedOffers(items, offers, products) {
       const relevantSubtotal = applicableIds.length
         ? applicableIds.reduce((sum, pid) => sum + (qtyByProduct[pid] || 0) * (priceByProduct[pid] || 0), 0)
         : subtotal
+
+      if (rule.discount_type === 'percentage_discount') {
+        // No minimum — unlocked whenever something in scope is actually in the cart.
+        if (relevantSubtotal > 0) {
+          const pct = Number(rule.discount_value)
+          const rupees = Math.round(relevantSubtotal * pct) / 100
+          unlocked.push({ id: `amt-${offer.id}`, type: 'percentage_discount', offerName: offer.name, pct, value: rupees })
+        }
+        continue
+      }
+
       if (relevantSubtotal >= Number(rule.min_purchase_amount)) {
         unlocked.push({
           id: `amt-${offer.id}`,
@@ -65,6 +76,9 @@ export function offerMechanicText(offer) {
   }
   if (offer.offer_type === 'amount_discount' && offer.amount_discount) {
     const { min_purchase_amount, discount_type, discount_value } = offer.amount_discount
+    if (discount_type === 'percentage_discount') {
+      return `${discount_value}% OFF`
+    }
     const suffix = discount_type === 'flat_discount' ? 'OFF' : 'worth of products FREE'
     return `Buy for ₹${min_purchase_amount}, get ₹${discount_value} ${suffix}`
   }
@@ -77,6 +91,9 @@ export function describeUnlockedOffer(u) {
   }
   if (u.type === 'flat_discount') {
     return `₹${u.value} OFF will be applied at checkout.`
+  }
+  if (u.type === 'percentage_discount') {
+    return `${u.pct}% OFF (₹${u.value}) will be applied at checkout.`
   }
   if (u.type === 'free_products_worth') {
     return `Pick ₹${u.value} worth of products free at checkout.`

@@ -28,6 +28,17 @@ export default function CartPage() {
     [items, offers, products]
   )
 
+  // Same discount math as CheckoutPage — flat_discount/percentage_discount
+  // offers actually reduce what's charged, so the total shown here should
+  // already reflect that instead of only the full (pre-discount) subtotal.
+  const discount = useMemo(
+    () => unlockedOffers
+      .filter((u) => u.type === 'flat_discount' || u.type === 'percentage_discount')
+      .reduce((sum, u) => sum + u.value, 0),
+    [unlockedOffers]
+  )
+  const total = Math.max(0, subtotal - discount)
+
   const backLink = (
     <Link to="/" className="inline-flex items-center gap-1.5 text-brand-600 text-sm font-semibold hover:text-brand-700">
       <ArrowLeft size={15} />
@@ -101,12 +112,26 @@ export default function CartPage() {
         ))}
       </div>
 
-      <div className="card mt-4 p-4 flex items-center justify-between">
-        <span className="font-semibold text-ink-700">Subtotal</span>
-        <span className="text-xl font-extrabold text-ink-900">₹{subtotal.toFixed(2)}</span>
+      <div className="card mt-4 p-4 space-y-1">
+        <div className="flex items-center justify-between">
+          <span className="text-ink-500">Subtotal</span>
+          <span className="text-ink-900">₹{subtotal.toFixed(2)}</span>
+        </div>
+        {discount > 0 && (
+          <div className="flex items-center justify-between text-green-600 text-sm">
+            <span>Offer discount</span>
+            <span>−₹{discount.toFixed(2)}</span>
+          </div>
+        )}
+        <div className="flex items-center justify-between pt-1">
+          <span className="font-bold text-ink-900">Total</span>
+          <span className="text-xl font-extrabold text-ink-900">₹{total.toFixed(2)}</span>
+        </div>
       </div>
       <p className="text-xs text-ink-400 mt-1">
-        {unlockedOffers.length > 0 ? 'Offer details above will be applied at checkout.' : 'Offers, if any, are applied at checkout.'}
+        {unlockedOffers.length > 0
+          ? (discount > 0 ? 'Discount already reflected above; the rest is applied at checkout.' : 'Offer details above will be applied at checkout.')
+          : 'Offers, if any, are applied at checkout.'}
       </p>
 
       <button className="btn-primary rounded-full w-full mt-4 py-3" onClick={() => navigate('/checkout')}>

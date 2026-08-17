@@ -35,13 +35,14 @@ export default function CheckoutPage() {
       .reduce((sum, o) => sum + Number(o.amount_discount.discount_value), 0)
   }, [offers, subtotal])
 
-  // flat_discount offers actually reduce what's charged — CartPage already
-  // promises "₹X OFF will be applied at checkout" for these, so the total
-  // shown here has to reflect it too, not just the free-products picker.
+  // flat_discount / percentage_discount offers actually reduce what's charged
+  // — CartPage already promises "X OFF will be applied at checkout" for
+  // these, so the total shown here has to reflect it too, not just the
+  // free-products picker.
   const flatDiscount = useMemo(() => {
     const unlocked = getUnlockedOffers(items, offers, products)
     return unlocked
-      .filter((u) => u.type === 'flat_discount')
+      .filter((u) => u.type === 'flat_discount' || u.type === 'percentage_discount')
       .reduce((sum, u) => sum + u.value, 0)
   }, [items, offers, products])
 

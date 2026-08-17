@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import ReadOnlyOrAdminCRM
+from apps.offers.services import get_product_discount_percentages
 from apps.settings.services import get_bool_setting
 from .models import Product, ProductImage, CatalogueFile
 from .serializers import (
@@ -63,8 +64,9 @@ class ProductViewSet(viewsets.ModelViewSet):
         ctx = super().get_serializer_context()
         ctx["request"] = self.request
         # Fetched once per request/list here (not per product in the serializer)
-        # to avoid a settings query per row.
+        # to avoid a settings/offers query per row.
         ctx["reduce_stock"] = get_bool_setting("reduce_stock")
+        ctx["discount_pct_map"] = get_product_discount_percentages()
         return ctx
 
     @action(detail=True, methods=["post"], parser_classes=[MultiPartParser, FormParser])

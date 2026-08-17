@@ -60,22 +60,29 @@ class BuyXGetYOffer(models.Model):
 
 class AmountDiscountOffer(models.Model):
     """
-    e.g. 'Buy for ₹2000, get ₹300 off' or 'Buy for ₹2000, take ₹300 worth of products free'.
+    e.g. 'Buy for ₹2000, get ₹300 off', 'Buy for ₹2000, take ₹300 worth of
+    products free', or '50% off selected products' (no minimum at all).
     """
     class DiscountType(models.TextChoices):
         FLAT_DISCOUNT = "flat_discount", "Flat Rupee Discount"
         FREE_PRODUCTS_WORTH = "free_products_worth", "Free Products Worth ₹"
+        PERCENTAGE_DISCOUNT = "percentage_discount", "Percentage Discount"
 
     offer = models.OneToOneField(Offer, on_delete=models.CASCADE, related_name="amount_discount")
-    min_purchase_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    # Unused (stays 0) for percentage_discount — that variant has no minimum,
+    # it's just an unconditional % off whatever's in applicable_products.
+    min_purchase_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     discount_type = models.CharField(max_length=25, choices=DiscountType.choices)
     discount_value = models.DecimalField(
-        max_digits=10, decimal_places=2, help_text="Rupees off, or rupee-value of products the customer may pick free."
+        max_digits=10, decimal_places=2,
+        help_text="Rupees off, rupee-value of products the customer may pick free, or a percentage (0-100) — depends on Discount Type.",
     )
     applicable_products = models.ManyToManyField(
         Product, related_name="amount_discount_offers", blank=True,
-        help_text="Products whose value counts toward the minimum. Leave empty to apply to the whole cart.",
+        help_text="Products this offer applies to. Leave empty to apply to the whole cart / all products.",
     )
 
     def __str__(self):
+        if self.discount_type == self.DiscountType.PERCENTAGE_DISCOUNT:
+            return f"{self.discount_value}% off — {self.offer.name}"
         return f"Spend ₹{self.min_purchase_amount} — {self.offer.name}"

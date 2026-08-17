@@ -1,6 +1,24 @@
+from decimal import Decimal
+
 from django.urls import reverse
 from rest_framework import serializers
 from .models import Product, ProductImage, CatalogueFile
+
+
+def _discounted_price(obj, context):
+    """
+    Shared by both serializers below. `discount_pct_map` (set once per
+    request in ProductViewSet.get_serializer_context) maps product id ->
+    percentage, with key None as the fallback for "applies to all products"
+    offers. Purely informational — the cart/checkout discount is computed
+    separately in apps.offers.services.evaluate_cart_offers, unaffected by
+    this field.
+    """
+    pct_map = context.get("discount_pct_map") or {}
+    pct = pct_map.get(obj.id, pct_map.get(None))
+    if not pct:
+        return None
+    return (obj.price * (Decimal("100") - pct) / Decimal("100")).quantize(Decimal("0.01"))
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -14,11 +32,12 @@ class ProductListSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source="category.name", read_only=True)
     primary_image = serializers.SerializerMethodField()
     in_stock = serializers.SerializerMethodField()
+    discounted_price = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = [
-            "id", "name", "slug", "price", "stock_quantity", "unit_label",
+            "id", "name", "slug", "price", "discounted_price", "stock_quantity", "unit_label",
             "is_available", "in_stock", "category", "category_name", "primary_image",
         ]
 
@@ -33,24 +52,31 @@ class ProductListSerializer(serializers.ModelSerializer):
     def get_in_stock(self, obj):
         return obj.is_in_stock(self.context.get("reduce_stock", False))
 
+    def get_discounted_price(self, obj):
+        return _discounted_price(obj, self.context)
+
 
 class ProductDetailSerializer(serializers.ModelSerializer):
     """Full serializer — product detail page & admin edit form."""
     images = ProductImageSerializer(many=True, read_only=True)
     category_name = serializers.CharField(source="category.name", read_only=True)
     in_stock = serializers.SerializerMethodField()
+    discounted_price = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = [
             "id", "category", "category_name", "name", "slug", "description",
-            "price", "stock_quantity", "unit_label", "is_available", "in_stock",
+            "price", "discounted_price", "stock_quantity", "unit_label", "is_available", "in_stock",
             "images", "created_at", "updated_at",
         ]
         read_only_fields = ["id", "slug", "created_at", "updated_at"]
 
     def get_in_stock(self, obj):
         return obj.is_in_stock(self.context.get("reduce_stock", False))
+
+    def get_discounted_price(self, obj):
+        return _discounted_price(obj, self.context)
 
 
 class CatalogueFileSerializer(serializers.ModelSerializer):

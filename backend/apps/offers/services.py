@@ -17,6 +17,10 @@ MVP design decisions (documented here so they're easy to revisit):
     product itself is what's granted free.
   - Amount discount, flat_discount: applies as a flat rupee discount off the
     order total once the qualifying subtotal is reached.
+  - Amount discount, percentage_discount: no minimum/threshold at all — an
+    unconditional %-off on whatever's in applicable_products (or the whole
+    cart if empty), applied to every matching cart line whenever it's in the
+    cart. min_purchase_amount is unused (stays 0) for this variant.
   - Amount discount, free_products_worth: does NOT auto-apply a discount.
     Instead it opens up a ₹ "free product budget" that the customer redeems
     by picking their own products at checkout (any product, not restricted
@@ -122,6 +126,19 @@ def evaluate_cart_offers(cart_items, free_selections=None):
                 )
             else:
                 relevant_subtotal = cart_subtotal
+
+            if rule.discount_type == rule.DiscountType.PERCENTAGE_DISCOUNT:
+                # Unconditional — no min_purchase_amount gate. Only "applies"
+                # (shows up in the summary) if something in scope is actually
+                # in the cart, same spirit as the other two staying silent
+                # when they don't qualify.
+                if relevant_subtotal > 0:
+                    pct_discount = (relevant_subtotal * rule.discount_value / Decimal("100")).quantize(Decimal("0.01"))
+                    discount_amount += pct_discount
+                    applied_offer_ids.append(offer.id)
+                    applied_summary.append(f"{offer.name}: {rule.discount_value}% off applicable products")
+                continue
+
             if relevant_subtotal >= rule.min_purchase_amount:
                 applied_offer_ids.append(offer.id)
                 if rule.discount_type == rule.DiscountType.FLAT_DISCOUNT:
@@ -163,3 +180,32 @@ def evaluate_cart_offers(cart_items, free_selections=None):
         "applied_offer_ids": applied_offer_ids,
         "free_value": free_value,
     }
+
+
+def get_product_discount_percentages():
+    """
+    {product_id: Decimal percentage} for every product covered by an active
+    percentage_discount offer — used to show a struck-through discounted
+    price directly on the storefront's product cards (informational only;
+    the cart still stores the full price and the actual discount is computed
+    and shown separately at checkout via evaluate_cart_offers above).
+
+    get_active_offers() is already ordered highest-priority first, so the
+    first offer seen covering a given product is kept and later ones are
+    ignored for that product — same priority semantics used everywhere else.
+    Key `None` holds the percentage for "applies to all products" offers
+    (empty applicable_products), checked by callers as the fallback.
+    """
+    result = {}
+    for offer in get_active_offers():
+        if offer.offer_type != Offer.OfferType.AMOUNT_DISCOUNT:
+            continue
+        rule = getattr(offer, "amount_discount", None)
+        if not rule or rule.discount_type != rule.DiscountType.PERCENTAGE_DISCOUNT:
+            continue
+        applicable_ids = list(rule.applicable_products.values_list("id", flat=True))
+        keys = applicable_ids or [None]
+        for key in keys:
+            if key not in result:
+                result[key] = rule.discount_value
+    return result
