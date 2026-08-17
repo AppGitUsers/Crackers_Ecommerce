@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Plus, Trash2, Save, CheckCircle2 } from 'lucide-react'
-import { SettingsAPI } from '../../api/endpoints'
-import { ConfirmDialog, PageLoader, Empty } from '../../components/admin/ui.jsx'
+import { Plus, Trash2, Save, CheckCircle2, FileSpreadsheet, Download } from 'lucide-react'
+import { SettingsAPI, CatalogueAPI } from '../../api/endpoints'
+import { ConfirmDialog, PageLoader, Empty, FileInput } from '../../components/admin/ui.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
+
+const CATALOGUE_ALLOWED_EXTENSIONS = ['xlsx', 'xls', 'csv']
 
 function humanizeKey(key) {
   return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
@@ -20,6 +22,11 @@ export default function SettingsPage() {
   const [newKey, setNewKey] = useState('')
   const [newValue, setNewValue] = useState('')
 
+  const [catalogueFile, setCatalogueFile] = useState(null)
+  const [catalogueLoading, setCatalogueLoading] = useState(true)
+  const [catalogueUploading, setCatalogueUploading] = useState(false)
+  const [catalogueRemoveConfirm, setCatalogueRemoveConfirm] = useState(false)
+
   function load() {
     setLoading(true)
     SettingsAPI.list()
@@ -31,7 +38,38 @@ export default function SettingsPage() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [])
+  function loadCatalogue() {
+    setCatalogueLoading(true)
+    CatalogueAPI.get()
+      .then(({ data }) => setCatalogueFile(data))
+      .finally(() => setCatalogueLoading(false))
+  }
+
+  useEffect(() => { load(); loadCatalogue() }, [])
+
+  function handleCatalogueFileChange(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    const ext = file.name.split('.').pop()?.toLowerCase()
+    if (!CATALOGUE_ALLOWED_EXTENSIONS.includes(ext)) {
+      toast.error('Only Excel (.xlsx, .xls) or CSV files are allowed.')
+      return
+    }
+    setCatalogueUploading(true)
+    CatalogueAPI.upload(file)
+      .then(({ data }) => {
+        setCatalogueFile(data)
+        toast.success('Catalogue uploaded.')
+      })
+      .finally(() => setCatalogueUploading(false))
+  }
+
+  async function handleCatalogueRemove() {
+    await CatalogueAPI.remove()
+    setCatalogueFile(null)
+    toast.success('Catalogue removed.')
+  }
 
   async function handleSaveAll(e) {
     e.preventDefault()
@@ -149,6 +187,56 @@ export default function SettingsPage() {
         onConfirm={() => handleDelete(deleteTarget.id)}
         title="Delete setting"
         message={deleteTarget ? `Delete "${deleteTarget.key}"? Anything that reads this key (e.g. the invoice) will fall back to blank.` : ''}
+      />
+
+      <div className="card p-5 mt-4">
+        <div className="flex items-center gap-2 mb-1">
+          <FileSpreadsheet size={18} className="text-brand-600" />
+          <h2 className="font-bold text-ink-900">Product Catalogue</h2>
+        </div>
+        <p className="text-sm text-ink-500 mb-4">
+          Upload an Excel or CSV price list — customers can download it from the storefront's Products page.
+        </p>
+
+        {catalogueLoading ? (
+          <PageLoader />
+        ) : catalogueFile ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-ink-900 truncate">{catalogueFile.original_filename}</p>
+              <p className="text-xs text-ink-400">
+                Uploaded {new Date(catalogueFile.uploaded_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                {catalogueFile.uploaded_by_username ? ` by ${catalogueFile.uploaded_by_username}` : ''}
+              </p>
+            </div>
+            <a href={catalogueFile.download_url} className="btn-secondary btn-sm" target="_blank" rel="noopener noreferrer">
+              <Download size={14} />
+              Download
+            </a>
+            <FileInput
+              onChange={handleCatalogueFileChange}
+              accept=".xlsx,.xls,.csv"
+              label={catalogueUploading ? 'Uploading…' : 'Replace'}
+            />
+            <button type="button" className="btn-ghost text-brand-600 hover:bg-brand-50" onClick={() => setCatalogueRemoveConfirm(true)}>
+              <Trash2 size={16} />
+            </button>
+          </div>
+        ) : (
+          <FileInput
+            onChange={handleCatalogueFileChange}
+            accept=".xlsx,.xls,.csv"
+            label={catalogueUploading ? 'Uploading…' : 'Upload Catalogue'}
+          />
+        )}
+      </div>
+
+      <ConfirmDialog
+        open={catalogueRemoveConfirm}
+        onClose={() => setCatalogueRemoveConfirm(false)}
+        onConfirm={handleCatalogueRemove}
+        title="Remove catalogue"
+        message="Remove the downloadable catalogue? The download button will disappear from the storefront until a new file is uploaded."
       />
     </div>
   )

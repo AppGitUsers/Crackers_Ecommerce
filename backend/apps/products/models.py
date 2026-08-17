@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
 
@@ -66,3 +67,18 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.product.name}"
+
+
+class CatalogueFile(models.Model):
+    """
+    The admin's downloadable product catalogue (Excel/CSV) — a plain document
+    shown on the storefront, unrelated to the structured Product rows above.
+    Singleton by convention: uploading a new one replaces whatever is there.
+    """
+    file = models.FileField(upload_to="catalogue/")
+    original_filename = models.CharField(max_length=255)
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.original_filename

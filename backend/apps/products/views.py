@@ -1,12 +1,21 @@
+import os
+
+from django.http import HttpResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from apps.accounts.permissions import ReadOnlyOrAdminCRM
-from .models import Product, ProductImage
-from .serializers import ProductListSerializer, ProductDetailSerializer, ProductImageSerializer
+from .models import Product, ProductImage, CatalogueFile
+from .serializers import (
+    ProductListSerializer, ProductDetailSerializer, ProductImageSerializer, CatalogueFileSerializer,
+)
+
+CATALOGUE_ALLOWED_EXTENSIONS = {".xlsx", ".xls", ".csv"}
+CATALOGUE_MAX_SIZE_BYTES = 10 * 1024 * 1024  # 10MB
 
 
 class ProductPagination(PageNumberPagination):
@@ -76,3 +85,62 @@ class ProductViewSet(viewsets.ModelViewSet):
         product = self.get_object()
         product.images.filter(id=image_id).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CatalogueFileView(APIView):
+    """
+    GET /api/products/catalogue-file/  — public, used by the storefront to check
+    whether a downloadable catalogue exists.
+    POST/DELETE — admin-only. Singleton by convention: uploading replaces
+    whatever catalogue file was there before (old file removed from disk too).
+    """
+    permission_classes = [ReadOnlyOrAdminCRM]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get(self, request):
+        obj = CatalogueFile.objects.first()
+        if not obj:
+            return Response(None)
+        return Response(CatalogueFileSerializer(obj, context={"request": request}).data)
+
+    def post(self, request):
+        upload = request.FILES.get("file")
+        if not upload:
+            return Response({"detail": "No file provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+        ext = os.path.splitext(upload.name)[1].lower()
+        if ext not in CATALOGUE_ALLOWED_EXTENSIONS:
+            return Response(
+                {"detail": "Only Excel (.xlsx, .xls) or CSV files are allowed."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if upload.size > CATALOGUE_MAX_SIZE_BYTES:
+            return Response({"detail": "File is too large (max 10MB)."}, status=status.HTTP_400_BAD_REQUEST)
+
+        existing = CatalogueFile.objects.first()
+        if existing:
+            existing.file.delete(save=False)
+            existing.delete()
+
+        obj = CatalogueFile.objects.create(file=upload, original_filename=upload.name, uploaded_by=request.user)
+        return Response(CatalogueFileSerializer(obj, context={"request": request}).data, status=status.HTTP_201_CREATED)
+
+    def delete(self, request):
+        existing = CatalogueFile.objects.first()
+        if existing:
+            existing.file.delete(save=False)
+            existing.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CatalogueFileDownloadView(APIView):
+    """GET /api/products/catalogue-file/download/ — public file download."""
+    permission_classes = [ReadOnlyOrAdminCRM]
+
+    def get(self, request):
+        obj = CatalogueFile.objects.first()
+        if not obj:
+            return Response({"detail": "No catalogue file uploaded yet."}, status=status.HTTP_404_NOT_FOUND)
+        response = HttpResponse(obj.file.read(), content_type="application/octet-stream")
+        response["Content-Disposition"] = f'attachment; filename="{obj.original_filename}"'
+        return response

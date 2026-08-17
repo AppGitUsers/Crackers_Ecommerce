@@ -3,8 +3,9 @@ import { useSearchParams } from 'react-router-dom'
 import {
   Sparkles, BadgeCheck, Phone, LayoutGrid, ShieldCheck,
   ShoppingBag, ClipboardCheck, PhoneCall, Award, MapPin, Star, ImageOff, X, ArrowRight,
+  FileSpreadsheet, Download,
 } from 'lucide-react'
-import { CategoriesAPI, ProductsAPI } from '../../api/endpoints'
+import { CategoriesAPI, ProductsAPI, CatalogueAPI } from '../../api/endpoints'
 import ProductCard from '../../components/storefront/ProductCard.jsx'
 import { useReveal } from '../../hooks/useReveal'
 
@@ -89,6 +90,7 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [searchParams, setSearchParams] = useSearchParams()
   const query = searchParams.get('q') || ''
+  const [catalogueFile, setCatalogueFile] = useState(null)
 
   // "Flat mode" = a single category picked, or a search in progress — both
   // are a single growing feed of results, infinite-scrolled. The default
@@ -111,6 +113,10 @@ export default function HomePage() {
 
   useEffect(() => {
     CategoriesAPI.list().then(({ data }) => setCategories(data.results || data))
+  }, [])
+
+  useEffect(() => {
+    CatalogueAPI.get().then(({ data }) => setCatalogueFile(data)).catch(() => {})
   }, [])
 
   // Mode A fetch: one small request per category, run in parallel.
@@ -241,6 +247,31 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      {catalogueFile && (
+        <Reveal className="mb-8">
+          <a
+            href={catalogueFile.download_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex flex-wrap items-center justify-between gap-3 bg-brand-50 border border-brand-200 rounded-xl px-4 py-3.5 hover:bg-brand-100 transition-colors"
+          >
+            <span className="flex items-center gap-3 min-w-0">
+              <span className="w-9 h-9 rounded-full bg-brand-500 flex items-center justify-center shrink-0">
+                <FileSpreadsheet size={16} className="text-white" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-bold text-ink-900">Download our full product catalogue</span>
+                <span className="block text-xs text-ink-500 truncate">{catalogueFile.original_filename}</span>
+              </span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 shrink-0">
+              <Download size={14} />
+              Download
+            </span>
+          </a>
+        </Reveal>
+      )}
 
       {query && (
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6 bg-sandal-50 border border-sandal-200 rounded-xl px-4 py-3">

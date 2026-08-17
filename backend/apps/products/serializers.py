@@ -1,5 +1,6 @@
+from django.urls import reverse
 from rest_framework import serializers
-from .models import Product, ProductImage
+from .models import Product, ProductImage, CatalogueFile
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -42,3 +43,17 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             "images", "created_at", "updated_at",
         ]
         read_only_fields = ["id", "slug", "created_at", "updated_at"]
+
+
+class CatalogueFileSerializer(serializers.ModelSerializer):
+    uploaded_by_username = serializers.CharField(source="uploaded_by.username", read_only=True, default=None)
+    download_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CatalogueFile
+        fields = ["id", "original_filename", "uploaded_at", "uploaded_by_username", "download_url"]
+
+    def get_download_url(self, obj):
+        request = self.context.get("request")
+        url = reverse("catalogue-file-download")
+        return request.build_absolute_uri(url) if request else url

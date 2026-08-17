@@ -20,6 +20,16 @@ export const ProductsAPI = {
   deleteImage: (productId, imageId) => api.delete(`/products/${productId}/images/${imageId}/`),
 }
 
+export const CatalogueAPI = {
+  get: () => api.get('/products/catalogue-file/'),
+  upload: (file) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    return api.post('/products/catalogue-file/', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+  },
+  remove: () => api.delete('/products/catalogue-file/'),
+}
+
 export const OffersAPI = {
   active: () => api.get('/offers/active/'),
   list: (params) => api.get('/offers/', { params }),
