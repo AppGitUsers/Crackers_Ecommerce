@@ -4,6 +4,7 @@ import { IndianRupee, Package, Hourglass, PartyPopper, PackageX, FolderTree, Pho
 import { DashboardAPI } from '../../api/endpoints'
 import StatCard from '../../components/admin/StatCard.jsx'
 import { PageLoader, FilterPills } from '../../components/admin/ui.jsx'
+import EnableNotificationsCard from '../../components/admin/EnableNotifications.jsx'
 
 const RANGE_OPTIONS = [
   { value: 7, label: 'Last 7 days' },
@@ -32,6 +33,8 @@ export default function DashboardPage() {
         <h1 className="page-title">Dashboard</h1>
         <FilterPills options={RANGE_OPTIONS} value={days} onChange={setDays} />
       </div>
+
+      <EnableNotificationsCard />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard label="Total Sales" value={`₹${Number(data.total_sales).toLocaleString('en-IN')}`} icon={IndianRupee} accent="green" />

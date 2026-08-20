@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "apps.finance",
     "apps.staff",
     "apps.settings",
+    "apps.notifications",
     "apps.core",
 ]
 
@@ -129,6 +130,11 @@ SIMPLE_JWT = {
 FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:5173")
 CORS_ALLOWED_ORIGINS = [FRONTEND_URL]
 CORS_ALLOW_CREDENTIALS = True
+
+# --- Web Push (order notifications) ---
+VAPID_PUBLIC_KEY = config("VAPID_PUBLIC_KEY", default="")
+VAPID_PRIVATE_KEY = config("VAPID_PRIVATE_KEY", default="")
+VAPID_CLAIM_EMAIL = config("VAPID_CLAIM_EMAIL", default="admin@example.com")
 
 # The storefront is public / read-mostly, so public GETs on products & categories
 # don't require auth. Admin CRM endpoints require auth + role checks (see apps/accounts/permissions.py).

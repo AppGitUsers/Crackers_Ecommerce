@@ -101,6 +101,12 @@ export const DashboardAPI = {
   overview: (days = 30) => api.get('/dashboard/overview/', { params: { days } }),
 }
 
+export const NotificationsAPI = {
+  vapidKey: () => api.get('/notifications/vapid-public-key/'),
+  subscribe: (subscription) => api.post('/notifications/subscribe/', subscription),
+  unsubscribe: (payload) => api.post('/notifications/unsubscribe/', payload),
+}
+
 export const SettingsAPI = {
   list: (params) => api.get('/settings/', { params }),
   create: (data) => api.post('/settings/', data),
