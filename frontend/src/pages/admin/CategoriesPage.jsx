@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { CategoriesAdminAPI } from '../../api/endpoints'
-import { Modal, ConfirmDialog, PageLoader, Toggle, FileInput } from '../../components/admin/ui.jsx'
+import { Modal, ConfirmDialog, PageLoader, Toggle, FileInput, Pagination } from '../../components/admin/ui.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 
 const EMPTY_FORM = { name: '', description: '', is_active: true, display_order: 0 }
+const PAGE_SIZE = 20
 
 export default function CategoriesPage() {
   const toast = useToast()
@@ -17,15 +18,25 @@ export default function CategoriesPage() {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [confirmRemoveImage, setConfirmRemoveImage] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [page, setPage] = useState(1)
+  const [count, setCount] = useState(0)
 
-  function load() {
+  function load(pageToLoad = page) {
     setLoading(true)
-    CategoriesAdminAPI.list()
-      .then(({ data }) => setCategories(data.results || data))
+    CategoriesAdminAPI.list({ page: pageToLoad })
+      .then(({ data }) => {
+        setCategories(data.results || data)
+        setCount(data.count ?? (data.results || data).length)
+      })
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [])
+  function goToPage(p) {
+    setPage(p)
+    load(p)
+  }
+
+  useEffect(() => { load(1) }, [])
 
   function openCreate() {
     setEditing(null)
@@ -144,6 +155,8 @@ export default function CategoriesPage() {
               </tbody>
             </table>
           </div>
+
+          <Pagination page={page} count={count} pageSize={PAGE_SIZE} onChange={goToPage} itemLabel="category" itemLabelPlural="categories" />
         </>
       )}
 

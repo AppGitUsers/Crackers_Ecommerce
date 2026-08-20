@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Plus, Clock } from 'lucide-react'
 import { StaffAPI } from '../../../api/endpoints'
-import { Modal, ConfirmDialog, PageLoader, Empty, Toggle } from '../../../components/admin/ui.jsx'
+import { Modal, ConfirmDialog, PageLoader, Empty, Toggle, Pagination } from '../../../components/admin/ui.jsx'
 import { useToast } from '../../../context/ToastContext.jsx'
 
 const ALL_DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
 const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI']
+const PAGE_SIZE = 20
 
 const EMPTY_FORM = {
   name: '', start_time: '09:00', end_time: '17:00',
@@ -21,13 +22,25 @@ export default function ShiftsTab() {
   const [form, setForm] = useState(EMPTY_FORM)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [page, setPage] = useState(1)
+  const [count, setCount] = useState(0)
 
-  function load() {
+  function load(pageToLoad = page) {
     setLoading(true)
-    StaffAPI.shifts.list().then(({ data }) => setShifts(data.results || data)).finally(() => setLoading(false))
+    StaffAPI.shifts.list({ page: pageToLoad })
+      .then(({ data }) => {
+        setShifts(data.results || data)
+        setCount(data.count ?? (data.results || data).length)
+      })
+      .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [])
+  function goToPage(p) {
+    setPage(p)
+    load(p)
+  }
+
+  useEffect(() => { load(1) }, [])
 
   function openCreate() {
     setEditing(null)
@@ -92,6 +105,7 @@ export default function ShiftsTab() {
       ) : shifts.length === 0 ? (
         <Empty message="No shifts yet" icon={<Clock size={32} />} />
       ) : (
+        <>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {shifts.map((s) => (
             <div key={s.id} className="card p-4">
@@ -140,6 +154,8 @@ export default function ShiftsTab() {
             </div>
           ))}
         </div>
+        <Pagination page={page} count={count} pageSize={PAGE_SIZE} onChange={goToPage} itemLabel="shift" />
+        </>
       )}
 
       <Modal

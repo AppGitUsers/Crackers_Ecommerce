@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Plus, ImageOff } from 'lucide-react'
 import { CategoriesAdminAPI, ProductsAPI } from '../../api/endpoints'
-import { Modal, ConfirmDialog, PageLoader, Toggle, Select, FileInput } from '../../components/admin/ui.jsx'
+import { Modal, ConfirmDialog, PageLoader, Toggle, Select, FileInput, Pagination } from '../../components/admin/ui.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 
 const EMPTY_FORM = { category: '', name: '', description: '', price: '', stock_quantity: 0, unit_label: 'box', is_available: true }
+const PAGE_SIZE = 20
 
 export default function ProductsPage() {
   const toast = useToast()
@@ -20,17 +21,28 @@ export default function ProductsPage() {
   const [uploadingImage, setUploadingImage] = useState(false)
   const [togglingIds, setTogglingIds] = useState(new Set())
   const [confirmRemoveImage, setConfirmRemoveImage] = useState(false)
+  const [page, setPage] = useState(1)
+  const [count, setCount] = useState(0)
 
-  function load() {
+  function load(pageToLoad = page) {
     setLoading(true)
-    const params = categoryFilter ? { category: categoryFilter } : {}
+    const params = { page: pageToLoad }
+    if (categoryFilter) params.category = categoryFilter
     ProductsAPI.list(params)
-      .then(({ data }) => setProducts(data.results || data))
+      .then(({ data }) => {
+        setProducts(data.results || data)
+        setCount(data.count ?? (data.results || data).length)
+      })
       .finally(() => setLoading(false))
   }
 
+  function goToPage(p) {
+    setPage(p)
+    load(p)
+  }
+
   useEffect(() => { CategoriesAdminAPI.list().then(({ data }) => setCategories(data.results || data)) }, [])
-  useEffect(() => { load() }, [categoryFilter])
+  useEffect(() => { setPage(1); load(1) }, [categoryFilter])
 
   function openCreate() {
     setEditing(null)
@@ -214,6 +226,8 @@ export default function ProductsPage() {
               </tbody>
             </table>
           </div>
+
+          <Pagination page={page} count={count} pageSize={PAGE_SIZE} onChange={goToPage} itemLabel="product" />
         </>
       )}
 

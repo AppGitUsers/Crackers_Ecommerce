@@ -322,13 +322,14 @@ export function FileInput({ onChange, accept = 'image/*', capture, label = 'Choo
 }
 
 /** Shared Prev/Next pager — pass 1-indexed page, total row count, and page size. */
-export function Pagination({ page, count, pageSize, onChange, itemLabel = 'item' }) {
+export function Pagination({ page, count, pageSize, onChange, itemLabel = 'item', itemLabelPlural }) {
   const totalPages = Math.max(1, Math.ceil(count / pageSize))
   if (totalPages <= 1) return null
+  const label = count === 1 ? itemLabel : (itemLabelPlural || `${itemLabel}s`)
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
       <p className="text-sm text-ink-400">
-        Page {page} of {totalPages} · {count} {itemLabel}{count === 1 ? '' : 's'}
+        Page {page} of {totalPages} · {count} {label}
       </p>
       <div className="flex items-center gap-2">
         <button

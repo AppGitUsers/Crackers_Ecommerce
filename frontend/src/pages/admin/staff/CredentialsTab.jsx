@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react'
 import { Plus, Eye, EyeOff, KeyRound, ShieldAlert } from 'lucide-react'
 import { AuthAPI, StaffAPI } from '../../../api/endpoints'
 import { useAuth } from '../../../context/AuthContext'
-import { Modal, ConfirmDialog, PageLoader, Empty, Toggle, Select } from '../../../components/admin/ui.jsx'
+import { Modal, ConfirmDialog, PageLoader, Empty, Toggle, Select, Pagination } from '../../../components/admin/ui.jsx'
 import { useToast } from '../../../context/ToastContext.jsx'
+
+const PAGE_SIZE = 20
 
 const ROLE_BADGE = { superadmin: 'badge-brand', admin: 'badge-blue', staff: 'badge-gold' }
 const ROLE_LABEL = { superadmin: 'Super Admin', admin: 'Admin', staff: 'Staff' }
@@ -34,17 +36,27 @@ export default function CredentialsTab() {
   const [error, setError] = useState('')
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [page, setPage] = useState(1)
+  const [count, setCount] = useState(0)
 
-  function load() {
+  function load(pageToLoad = page) {
     setLoading(true)
-    AuthAPI.users.list()
-      .then(({ data }) => setUsers(data.results || data))
+    AuthAPI.users.list({ page: pageToLoad })
+      .then(({ data }) => {
+        setUsers(data.results || data)
+        setCount(data.count ?? (data.results || data).length)
+      })
       .catch((err) => { if (err.response?.status === 403) setForbidden(true) })
       .finally(() => setLoading(false))
   }
 
+  function goToPage(p) {
+    setPage(p)
+    load(p)
+  }
+
   useEffect(() => {
-    load()
+    load(1)
     StaffAPI.employees.list({ is_active: true }).then(({ data }) => setEmployees(data.results || data))
   }, [])
 
@@ -186,6 +198,8 @@ export default function CredentialsTab() {
               </tbody>
             </table>
           </div>
+
+          <Pagination page={page} count={count} pageSize={PAGE_SIZE} onChange={goToPage} itemLabel="login" />
         </>
       )}
 

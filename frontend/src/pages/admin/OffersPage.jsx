@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Plus, ImageOff, X } from 'lucide-react'
 import { OffersAPI, ProductsAPI } from '../../api/endpoints'
-import { Modal, ConfirmDialog, PageLoader, Toggle, Select, FileInput } from '../../components/admin/ui.jsx'
+import { Modal, ConfirmDialog, PageLoader, Toggle, Select, FileInput, Pagination } from '../../components/admin/ui.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
+
+const PAGE_SIZE = 20
 
 const OFFER_TYPE_OPTIONS = [
   { value: 'buy_x_get_y', label: 'Buy X Get Y' },
@@ -76,19 +78,31 @@ export default function OffersPage() {
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [togglingIds, setTogglingIds] = useState(new Set())
   const [confirmRemoveImage, setConfirmRemoveImage] = useState(false)
+  const [page, setPage] = useState(1)
+  const [count, setCount] = useState(0)
   // Collapsed by default — "buy X get Y" almost always means Y of the same
   // product you bought, which is already the backend's default when
   // free_products is empty. Only expand this (and let the admin pick a
   // different free product) when that's actually what's configured.
   const [customFreeProducts, setCustomFreeProducts] = useState(false)
 
-  function load() {
+  function load(pageToLoad = page) {
     setLoading(true)
-    OffersAPI.list().then(({ data }) => setOffers(data.results || data)).finally(() => setLoading(false))
+    OffersAPI.list({ page: pageToLoad })
+      .then(({ data }) => {
+        setOffers(data.results || data)
+        setCount(data.count ?? (data.results || data).length)
+      })
+      .finally(() => setLoading(false))
+  }
+
+  function goToPage(p) {
+    setPage(p)
+    load(p)
   }
 
   useEffect(() => {
-    load()
+    load(1)
     ProductsAPI.list().then(({ data }) => setProducts(data.results || data))
   }, [])
 
@@ -132,9 +146,10 @@ export default function OffersPage() {
   }
 
   async function refreshEditing(id) {
-    const { data } = await OffersAPI.list()
+    const { data } = await OffersAPI.list({ page })
     const list = data.results || data
     setOffers(list)
+    setCount(data.count ?? list.length)
     setEditing(list.find((o) => o.id === id) || null)
   }
 
@@ -225,6 +240,7 @@ export default function OffersPage() {
       </div>
 
       {loading ? <PageLoader /> : (
+        <>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {offers.map((offer) => (
             <div key={offer.id} className="card overflow-hidden">
@@ -286,6 +302,8 @@ export default function OffersPage() {
             </div>
           ))}
         </div>
+        <Pagination page={page} count={count} pageSize={PAGE_SIZE} onChange={goToPage} itemLabel="offer" />
+        </>
       )}
 
       <Modal

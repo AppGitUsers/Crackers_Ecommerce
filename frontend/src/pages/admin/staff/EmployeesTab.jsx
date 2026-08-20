@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Plus, Users, CalendarDays, Search } from 'lucide-react'
 import { StaffAPI } from '../../../api/endpoints'
-import { Modal, ConfirmDialog, PageLoader, Empty, Toggle, Select, DatePicker, FileInput } from '../../../components/admin/ui.jsx'
+import { Modal, ConfirmDialog, PageLoader, Empty, Toggle, Select, DatePicker, FileInput, Pagination } from '../../../components/admin/ui.jsx'
 import { useToast } from '../../../context/ToastContext.jsx'
+
+const PAGE_SIZE = 20
 
 const EMPLOYMENT_LABELS = { full_time: 'Full Time', part_time: 'Part Time', contract: 'Contract' }
 const EMPLOYMENT_OPTIONS = [
@@ -29,11 +31,24 @@ export default function EmployeesTab({ onOpenCalendar }) {
   const [photoFile, setPhotoFile] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [page, setPage] = useState(1)
+  const [count, setCount] = useState(0)
 
-  function load() {
+  function load(pageToLoad = page) {
     setLoading(true)
-    const params = search ? { search } : {}
-    StaffAPI.employees.list(params).then(({ data }) => setEmployees(data.results || data)).finally(() => setLoading(false))
+    const params = { page: pageToLoad }
+    if (search) params.search = search
+    StaffAPI.employees.list(params)
+      .then(({ data }) => {
+        setEmployees(data.results || data)
+        setCount(data.count ?? (data.results || data).length)
+      })
+      .finally(() => setLoading(false))
+  }
+
+  function goToPage(p) {
+    setPage(p)
+    load(p)
   }
 
   useEffect(() => {
@@ -42,7 +57,7 @@ export default function EmployeesTab({ onOpenCalendar }) {
   }, [])
 
   useEffect(() => {
-    const t = setTimeout(load, 300)
+    const t = setTimeout(() => { setPage(1); load(1) }, 300)
     return () => clearTimeout(t)
   }, [search])
 
@@ -116,6 +131,7 @@ export default function EmployeesTab({ onOpenCalendar }) {
       ) : employees.length === 0 ? (
         <Empty message="No employees yet" icon={<Users size={32} />} />
       ) : (
+        <>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {employees.map((emp) => (
             <div key={emp.id} className="card p-4 relative">
@@ -159,6 +175,8 @@ export default function EmployeesTab({ onOpenCalendar }) {
             </div>
           ))}
         </div>
+        <Pagination page={page} count={count} pageSize={PAGE_SIZE} onChange={goToPage} itemLabel="employee" />
+        </>
       )}
 
       <Modal

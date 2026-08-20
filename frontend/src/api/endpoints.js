@@ -59,7 +59,7 @@ export const AuthAPI = {
   login: (username, password) => api.post('/auth/login/', { username, password }, { skipErrorToast: true }),
   me: () => api.get('/auth/me/'),
   users: {
-    list: () => api.get('/auth/users/'),
+    list: (params) => api.get('/auth/users/', { params }),
     create: (data) => api.post('/auth/users/', data, { skipErrorToast: true }),
     update: (id, data) => api.patch(`/auth/users/${id}/`, data, { skipErrorToast: true }),
     remove: (id) => api.delete(`/auth/users/${id}/`),
