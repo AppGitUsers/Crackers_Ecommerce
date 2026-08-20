@@ -1,4 +1,4 @@
-# Sivakasi Crackers — E-commerce + Admin CRM
+# Achammal Pyrotech — E-commerce + Admin CRM
 
 Full-stack crackers (fireworks) e-commerce site with a custom Admin CRM.
 No payment gateway — customers check out with name + phone, an admin calls

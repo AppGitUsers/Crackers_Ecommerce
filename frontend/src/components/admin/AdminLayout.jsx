@@ -52,7 +52,7 @@ export default function AdminLayout() {
             <div className="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center shrink-0">
               <PartyPopper size={18} className="text-gold-400" />
             </div>
-            <p className="font-extrabold text-white text-base leading-tight truncate">Crackers CRM</p>
+            <p className="font-extrabold text-white text-base leading-tight truncate">Achammal Pyrotech</p>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -100,7 +100,7 @@ export default function AdminLayout() {
           >
             <Menu size={20} />
           </button>
-          <p className="font-bold text-ink-900 text-sm truncate">Crackers CRM</p>
+          <p className="font-bold text-ink-900 text-sm truncate">Achammal Pyrotech</p>
         </header>
 
         <main className="p-4 sm:p-6">

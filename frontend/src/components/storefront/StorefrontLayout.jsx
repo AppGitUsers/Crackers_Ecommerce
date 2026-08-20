@@ -49,7 +49,7 @@ export default function StorefrontLayout() {
               <Sparkles size={16} className="text-white" />
             </span>
             <span className="hidden sm:block text-lg font-extrabold text-white tracking-tight">
-              Sivakasi <span className="text-brand-400">Crackers</span>
+              Achammal <span className="text-brand-400">Pyrotech</span>
             </span>
           </Link>
 
@@ -87,13 +87,13 @@ export default function StorefrontLayout() {
               <Sparkles size={14} className="text-white" />
             </span>
             <span className="text-base font-extrabold text-white tracking-tight">
-              Sivakasi <span className="text-brand-400">Crackers</span>
+              Achammal <span className="text-brand-400">Pyrotech</span>
             </span>
           </div>
           <div className="flex flex-wrap gap-3 mb-6">
             <span className="flex items-center gap-1.5 bg-white/5 text-xs font-semibold px-3 py-1.5 rounded-full">
               <ShieldCheck size={13} className="text-sky-400" />
-              Genuine Sivakasi Crackers
+              Genuine Achammal Pyrotech
             </span>
             <span className="flex items-center gap-1.5 bg-white/5 text-xs font-semibold px-3 py-1.5 rounded-full">
               <PhoneCall size={13} className="text-sky-400" />
@@ -101,7 +101,7 @@ export default function StorefrontLayout() {
             </span>
           </div>
           <div className="text-sm border-t border-white/10 pt-4">
-            © {new Date().getFullYear()} Sivakasi Crackers. Orders confirmed by phone call after checkout.
+            © {new Date().getFullYear()} Achammal Pyrotech. Orders confirmed by phone call after checkout.
           </div>
         </div>
       </footer>

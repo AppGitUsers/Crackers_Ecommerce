@@ -1,7 +1,7 @@
 from django.db import migrations
 
 DEFAULT_KEYS = [
-    ("company_name", "Sivakasi Crackers"),
+    ("company_name", "Achammal Pyrotech"),
     ("company_address", ""),
     ("company_phone", ""),
     ("company_email", ""),

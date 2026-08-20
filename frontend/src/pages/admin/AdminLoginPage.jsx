@@ -32,7 +32,7 @@ export default function AdminLoginPage() {
           <div className="w-14 h-14 rounded-2xl bg-brand-600 flex items-center justify-center mx-auto mb-3">
             <PartyPopper size={26} className="text-gold-400" />
           </div>
-          <h1 className="text-xl font-bold text-ink-900">Sivakasi Crackers</h1>
+          <h1 className="text-xl font-bold text-ink-900">Achammal Pyrotech</h1>
           <p className="text-ink-500 text-sm">Admin CRM Login</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">

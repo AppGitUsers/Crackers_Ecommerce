@@ -18,7 +18,7 @@ const PAGE_SIZE = 20
 // Evergreen, always-true value props (no fabricated stats like "127 sold
 // today") — shown as arch-shaped cards anchored over the hero's wave edge.
 const VALUE_PROPS = [
-  { title: 'Genuine Sivakasi Crackers', icon: BadgeCheck },
+  { title: 'Genuine Achammal Pyrotech', icon: BadgeCheck },
   { title: 'Confirmed By Phone Call', icon: Phone },
   { title: 'Wide Range of Categories', icon: LayoutGrid },
   { title: 'Simple & Secure Checkout', icon: ShieldCheck },
@@ -219,7 +219,7 @@ export default function HomePage() {
           <div className="relative max-w-2xl mx-auto text-center">
             <p className="inline-flex items-center gap-1.5 text-sky-200 font-bold uppercase tracking-widest text-xs mb-3 bg-white/10 px-3 py-1.5 rounded-full">
               <Sparkles size={12} className="text-sky-300" />
-              Sivakasi Crackers
+              Achammal Pyrotech
             </p>
             <h1 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight">
               Crackers for every celebration
@@ -438,7 +438,7 @@ export default function HomePage() {
       <Reveal className="mt-14">
         <div className="flex items-center gap-3 pb-2 mb-4 border-b border-sandal-200">
           <span className="w-1 h-5 rounded-full bg-gradient-to-b from-brand-500 to-sky-500 shrink-0" />
-          <h2 className="text-lg font-extrabold text-ink-900">Why Sivakasi Crackers</h2>
+          <h2 className="text-lg font-extrabold text-ink-900">Why Achammal Pyrotech</h2>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {TRUST_HIGHLIGHTS.map((item, i) => {
