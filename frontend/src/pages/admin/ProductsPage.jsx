@@ -288,10 +288,8 @@ export default function ProductsPage() {
                 </div>
               )}
               <div className="flex items-center gap-3">
-                {/* capture="environment" opens the phone camera directly; users can still choose "Photo Library" from the same picker for gallery images */}
                 <FileInput
                   accept="image/*"
-                  capture="environment"
                   label={editing.images.length > 0 ? 'Replace Photo' : 'Add Photo'}
                   onChange={handleImageUpload}
                 />
