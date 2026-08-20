@@ -1,9 +1,11 @@
 from rest_framework import generics, viewsets
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
 
 from apps.accounts.permissions import IsAdminCRMUser
 from .models import CallLog
 from .serializers import CallLogSerializer, OrderCallSummarySerializer
-from .services import orders_with_call_summary
+from .services import orders_with_call_summary, call_status_counts as get_call_status_counts
 
 
 class CallLogViewSet(viewsets.ModelViewSet):
@@ -44,3 +46,15 @@ class OrderCallSummaryView(generics.ListAPIView):
         if status_filter:
             qs = qs.filter(latest_call_status=status_filter)
         return qs
+
+
+@api_view(["GET"])
+@permission_classes([IsAdminCRMUser])
+def call_status_counts(request):
+    """
+    GET /api/calls/orders/status_counts/
+    Per-status order counts for the Calls dashboard's summary tiles —
+    always reflects every order regardless of whatever status filter or
+    page the list itself currently has applied.
+    """
+    return Response(get_call_status_counts())

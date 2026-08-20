@@ -80,6 +80,7 @@ export const CustomersAPI = {
 
 export const CallsAPI = {
   orders: (params) => api.get('/calls/orders/', { params }),
+  statusCounts: () => api.get('/calls/orders/status_counts/'),
   history: (orderId) => api.get('/calls/', { params: { order: orderId, ordering: 'created_at' } }),
   list: (params) => api.get('/calls/', { params }),
   create: (data) => api.post('/calls/', data),

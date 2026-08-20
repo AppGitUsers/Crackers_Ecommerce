@@ -1,11 +1,20 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, CheckCircle2, Minus, Phone, ExternalLink } from 'lucide-react'
+import { Plus, CheckCircle2, Minus, Phone, ExternalLink, PhoneOff, PhoneMissed, PhoneCall } from 'lucide-react'
 import { CallsAPI } from '../../api/endpoints'
 import { Modal, PageLoader, Empty, FilterPills, Pagination, Select } from '../../components/admin/ui.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 
 const PAGE_SIZE = 20
+
+// The three statuses the dashboard's summary tiles surface — the other two
+// (deal_closed, cancelled) stay reachable via the filter pills below, just
+// not called out as top-line KPIs.
+const SUMMARY_TILES = [
+  { value: 'not_called', label: 'Not Called Yet', icon: PhoneOff, accent: 'bg-ink-100 text-ink-600' },
+  { value: 'no_answer', label: 'Called — No Answer', icon: PhoneMissed, accent: 'bg-yellow-100 text-yellow-700' },
+  { value: 'answered', label: 'Called — Answered', icon: PhoneCall, accent: 'bg-blue-100 text-blue-700' },
+]
 
 const STATUS_OPTIONS = [
   { value: 'not_called', label: 'Not Called Yet', color: 'bg-ink-100 text-ink-500' },
@@ -41,6 +50,7 @@ export default function CallsPage() {
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('')
+  const [statusCounts, setStatusCounts] = useState({})
 
   const [activeOrder, setActiveOrder] = useState(null)
   const [history, setHistory] = useState([])
@@ -61,14 +71,24 @@ export default function CallsPage() {
       .finally(() => setLoading(false))
   }
 
+  function loadCounts() {
+    CallsAPI.statusCounts().then(({ data }) => setStatusCounts(data))
+  }
+
   useEffect(() => {
     setPage(1)
     loadOrders(1)
   }, [statusFilter])
 
+  useEffect(() => { loadCounts() }, [])
+
   function goToPage(p) {
     setPage(p)
     loadOrders(p)
+  }
+
+  function toggleTile(value) {
+    setStatusFilter((current) => (current === value ? '' : value))
   }
 
   function loadHistory(orderId) {
@@ -108,6 +128,7 @@ export default function CallsPage() {
       setLogForm(EMPTY_LOG_FORM)
       loadHistory(activeOrder.id)
       loadOrders()
+      loadCounts()
     } finally {
       setSaving(false)
     }
@@ -117,6 +138,29 @@ export default function CallsPage() {
     <div>
       <div className="page-header">
         <h1 className="page-title">Calls</h1>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+        {SUMMARY_TILES.map((tile) => {
+          const Icon = tile.icon
+          const active = statusFilter === tile.value
+          return (
+            <button
+              key={tile.value}
+              type="button"
+              onClick={() => toggleTile(tile.value)}
+              className={`kpi-card text-left transition-shadow ${active ? 'ring-2 ring-brand-500' : 'hover:shadow-elevated'}`}
+            >
+              <div className={`kpi-icon ${tile.accent}`}>
+                <Icon size={20} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-ink-400 uppercase tracking-wide truncate">{tile.label}</p>
+                <p className="text-xl font-extrabold text-ink-900">{statusCounts[tile.value] ?? '—'}</p>
+              </div>
+            </button>
+          )
+        })}
       </div>
 
       <div className="mb-4">
