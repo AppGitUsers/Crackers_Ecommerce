@@ -11,10 +11,9 @@ export const ProductsAPI = {
   create: (formData) => api.post('/products/', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   update: (id, formData) => api.patch(`/products/${id}/`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   remove: (id) => api.delete(`/products/${id}/`),
-  uploadImage: (id, file, isPrimary = false) => {
+  uploadImage: (id, file) => {
     const fd = new FormData()
     fd.append('image', file)
-    fd.append('is_primary', isPrimary)
     return api.post(`/products/${id}/upload_image/`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
   },
   deleteImage: (productId, imageId) => api.delete(`/products/${productId}/images/${imageId}/`),
@@ -31,6 +30,7 @@ export const OffersAPI = {
     fd.append('image', file)
     return api.post(`/offers/${id}/upload_banner_image/`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
   },
+  removeBannerImage: (id) => api.delete(`/offers/${id}/remove_banner_image/`),
 }
 
 export const OrdersAPI = {
@@ -61,6 +61,7 @@ export const CategoriesAdminAPI = {
   create: (formData) => api.post('/categories/', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   update: (id, formData) => api.patch(`/categories/${id}/`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   remove: (id) => api.delete(`/categories/${id}/`),
+  removeImage: (id) => api.delete(`/categories/${id}/remove_image/`),
 }
 
 export const CustomersAPI = {

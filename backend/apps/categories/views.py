@@ -1,5 +1,7 @@
 from django.db.models import Count, Q
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from apps.accounts.permissions import ReadOnlyOrAdminCRM
 from .models import Category
@@ -23,3 +25,13 @@ class CategoryViewSet(viewsets.ModelViewSet):
         if not (self.request.user and self.request.user.is_authenticated):
             qs = qs.filter(is_active=True)
         return qs
+
+    @action(detail=True, methods=["delete"], url_path="remove_image")
+    def remove_image(self, request, pk=None):
+        """DELETE /api/categories/{id}/remove_image/ — clears the image field and deletes the file from disk."""
+        category = self.get_object()
+        if category.image:
+            category.image.delete(save=False)
+            category.image = None
+            category.save(update_fields=["image"])
+        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -25,6 +25,10 @@ class Category(models.Model):
         # written to storage) — skips recompressing an already-compressed
         # image on saves that don't touch this field (e.g. renaming).
         if self.image and not self.image._committed:
+            if self.pk:
+                old = Category.objects.filter(pk=self.pk).only("image").first()
+                if old and old.image and old.image.name != self.image.name:
+                    old.image.delete(save=False)
             self.image = compress_image(self.image, max_dimension=1200)
         super().save(*args, **kwargs)
 

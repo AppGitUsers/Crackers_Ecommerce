@@ -16,6 +16,7 @@ export default function ProductsPage() {
   const [form, setForm] = useState(EMPTY_FORM)
   const [categoryFilter, setCategoryFilter] = useState('')
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [confirmRemoveImage, setConfirmRemoveImage] = useState(false)
 
   function load() {
     setLoading(true)
@@ -71,9 +72,18 @@ export default function ProductsPage() {
     if (!editing) return
     const file = e.target.files[0]
     if (!file) return
-    await ProductsAPI.uploadImage(editing.id, file, editing.images.length === 0)
+    await ProductsAPI.uploadImage(editing.id, file)
     const { data } = await ProductsAPI.detail(editing.id)
     setEditing(data)
+    load()
+  }
+
+  async function handleRemoveImage() {
+    if (!editing || editing.images.length === 0) return
+    await ProductsAPI.deleteImage(editing.id, editing.images[0].id)
+    setEditing({ ...editing, images: [] })
+    toast.success('Photo removed.')
+    load()
   }
 
   async function toggleAvailability(product, nextValue) {
@@ -232,16 +242,26 @@ export default function ProductsPage() {
 
           {editing && (
             <div className="border-t border-sandal-200 pt-3">
-              <label className="label">Photos</label>
-              <div className="flex flex-wrap gap-2 mt-2 mb-2">
-                {editing.images.map((img) => (
-                  <div key={img.id} className="w-16 h-16 rounded-lg overflow-hidden border border-sandal-200">
-                    <img src={img.image} className="w-full h-full object-cover" />
-                  </div>
-                ))}
+              <label className="label">Photo</label>
+              {editing.images.length > 0 && (
+                <div className="w-24 h-24 rounded-lg overflow-hidden border border-sandal-200 mt-2 mb-2">
+                  <img src={editing.images[0].image} className="w-full h-full object-cover" />
+                </div>
+              )}
+              <div className="flex items-center gap-3">
+                {/* capture="environment" opens the phone camera directly; users can still choose "Photo Library" from the same picker for gallery images */}
+                <FileInput
+                  accept="image/*"
+                  capture="environment"
+                  label={editing.images.length > 0 ? 'Replace Photo' : 'Add Photo'}
+                  onChange={handleImageUpload}
+                />
+                {editing.images.length > 0 && (
+                  <button type="button" className="text-brand-600 font-semibold text-sm hover:text-brand-700" onClick={() => setConfirmRemoveImage(true)}>
+                    Remove
+                  </button>
+                )}
               </div>
-              {/* capture="environment" opens the phone camera directly; users can still choose "Photo Library" from the same picker for gallery images */}
-              <FileInput accept="image/*" capture="environment" label="Add Photo" onChange={handleImageUpload} />
               <p className="text-xs text-ink-400 mt-1">Take a photo or choose from gallery.</p>
             </div>
           )}
@@ -257,6 +277,14 @@ export default function ProductsPage() {
         onConfirm={() => handleDelete(deleteTarget.id)}
         title="Delete product"
         message={deleteTarget ? `Delete "${deleteTarget.name}"? This can't be undone.` : ''}
+      />
+
+      <ConfirmDialog
+        open={confirmRemoveImage}
+        onClose={() => setConfirmRemoveImage(false)}
+        onConfirm={handleRemoveImage}
+        title="Remove photo"
+        message="Remove this product's photo? This can't be undone."
       />
     </div>
   )

@@ -31,6 +31,10 @@ class Offer(models.Model):
         # written to storage) — skips recompressing an already-compressed
         # image on saves that don't touch this field.
         if self.banner_image and not self.banner_image._committed:
+            if self.pk:
+                old = Offer.objects.filter(pk=self.pk).only("banner_image").first()
+                if old and old.banner_image and old.banner_image.name != self.banner_image.name:
+                    old.banner_image.delete(save=False)
             self.banner_image = compress_image(self.banner_image, max_dimension=1920)
         super().save(*args, **kwargs)
 

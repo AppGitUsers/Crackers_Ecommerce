@@ -60,19 +60,27 @@ class ProductViewSet(viewsets.ModelViewSet):
         POST /api/products/{id}/upload_image/  (multipart, field name 'image')
         Used by the admin's product form — same endpoint whether the file came
         from the phone camera or the gallery picker, the browser handles that part.
+
+        Products only ever show a single photo (storefront/cart/search all read
+        `primary_image`, nothing renders a gallery), so this replaces whatever
+        image(s) the product already has rather than accumulating more —
+        deleting the old row(s) and their files from disk first.
         """
         product = self.get_object()
         image = request.FILES.get("image")
         if not image:
             return Response({"detail": "No image file provided."}, status=status.HTTP_400_BAD_REQUEST)
-        is_primary = request.data.get("is_primary") in ("true", "True", "1", True)
-        if is_primary:
-            product.images.update(is_primary=False)
-        img = ProductImage.objects.create(product=product, image=image, is_primary=is_primary)
+        for existing in product.images.all():
+            existing.image.delete(save=False)
+            existing.delete()
+        img = ProductImage.objects.create(product=product, image=image, is_primary=True)
         return Response(ProductImageSerializer(img, context={"request": request}).data, status=201)
 
     @action(detail=True, methods=["delete"], url_path="images/(?P<image_id>[^/.]+)")
     def delete_image(self, request, pk=None, image_id=None):
         product = self.get_object()
-        product.images.filter(id=image_id).delete()
+        instance = product.images.filter(id=image_id).first()
+        if instance:
+            instance.image.delete(save=False)
+            instance.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

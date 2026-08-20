@@ -71,6 +71,7 @@ export default function OffersPage() {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY_OFFER)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [confirmRemoveImage, setConfirmRemoveImage] = useState(false)
   // Collapsed by default — "buy X get Y" almost always means Y of the same
   // product you bought, which is already the backend's default when
   // free_products is empty. Only expand this (and let the admin pick a
@@ -162,6 +163,13 @@ export default function OffersPage() {
     if (!file) return
     await OffersAPI.uploadBannerImage(editing.id, file)
     toast.success('Banner image uploaded.')
+    refreshEditing(editing.id)
+  }
+
+  async function handleRemoveImage() {
+    if (!editing) return
+    await OffersAPI.removeBannerImage(editing.id)
+    toast.success('Banner image removed.')
     refreshEditing(editing.id)
   }
 
@@ -356,7 +364,14 @@ export default function OffersPage() {
                   <img src={editing.banner_image} className="w-full h-full object-cover" />
                 </div>
               )}
-              <FileInput accept="image/*" label="Upload Banner" onChange={handleImageUpload} />
+              <div className="flex items-center gap-3">
+                <FileInput accept="image/*" label={editing.banner_image ? 'Replace Banner' : 'Upload Banner'} onChange={handleImageUpload} />
+                {editing.banner_image && (
+                  <button type="button" className="text-brand-600 font-semibold text-sm hover:text-brand-700" onClick={() => setConfirmRemoveImage(true)}>
+                    Remove
+                  </button>
+                )}
+              </div>
               <p className="text-xs text-ink-400 mt-1">Shown behind the offer text in the storefront carousel.</p>
             </div>
           ) : (
@@ -371,6 +386,14 @@ export default function OffersPage() {
         onConfirm={() => handleDelete(deleteTarget.id)}
         title="Delete offer"
         message={deleteTarget ? `Delete "${deleteTarget.name}"? This can't be undone.` : ''}
+      />
+
+      <ConfirmDialog
+        open={confirmRemoveImage}
+        onClose={() => setConfirmRemoveImage(false)}
+        onConfirm={handleRemoveImage}
+        title="Remove banner image"
+        message="Remove this offer's banner image? This can't be undone."
       />
     </div>
   )

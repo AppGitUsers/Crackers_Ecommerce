@@ -26,6 +26,7 @@ class OfferViewSet(viewsets.ModelViewSet):
     def upload_banner_image(self, request, pk=None):
         """
         POST /api/offers/{id}/upload_banner_image/  (multipart, field name 'image')
+        Replaces any existing banner — save() deletes the old file from disk.
         """
         offer = self.get_object()
         image = request.FILES.get("image")
@@ -34,6 +35,16 @@ class OfferViewSet(viewsets.ModelViewSet):
         offer.banner_image = image
         offer.save(update_fields=["banner_image"])
         return Response(OfferSerializer(offer, context={"request": request}).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["delete"], url_path="remove_banner_image")
+    def remove_banner_image(self, request, pk=None):
+        """DELETE /api/offers/{id}/remove_banner_image/ — clears the banner and deletes the file from disk."""
+        offer = self.get_object()
+        if offer.banner_image:
+            offer.banner_image.delete(save=False)
+            offer.banner_image = None
+            offer.save(update_fields=["banner_image"])
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(["GET"])

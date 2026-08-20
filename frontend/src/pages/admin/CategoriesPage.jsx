@@ -15,6 +15,7 @@ export default function CategoriesPage() {
   const [form, setForm] = useState(EMPTY_FORM)
   const [imageFile, setImageFile] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [confirmRemoveImage, setConfirmRemoveImage] = useState(false)
 
   function load() {
     setLoading(true)
@@ -59,6 +60,15 @@ export default function CategoriesPage() {
   async function handleDelete(id) {
     await CategoriesAdminAPI.remove(id)
     toast.success('Category deleted.')
+    load()
+  }
+
+  async function handleRemoveImage() {
+    if (!editing) return
+    await CategoriesAdminAPI.removeImage(editing.id)
+    setEditing({ ...editing, image: null })
+    setImageFile(null)
+    toast.success('Photo removed.')
     load()
   }
 
@@ -152,7 +162,24 @@ export default function CategoriesPage() {
           </div>
           <div>
             <label className="label">Image</label>
-            <FileInput accept="image/*" fileName={imageFile?.name} onChange={(e) => setImageFile(e.target.files[0])} />
+            {editing?.image && (
+              <div className="w-24 h-24 rounded-lg overflow-hidden border border-sandal-200 mt-2 mb-2">
+                <img src={editing.image} className="w-full h-full object-cover" />
+              </div>
+            )}
+            <div className="flex items-center gap-3">
+              <FileInput
+                accept="image/*"
+                label={editing?.image ? 'Replace Photo' : 'Add Photo'}
+                fileName={imageFile?.name}
+                onChange={(e) => setImageFile(e.target.files[0])}
+              />
+              {editing?.image && (
+                <button type="button" className="text-brand-600 font-semibold text-sm hover:text-brand-700" onClick={() => setConfirmRemoveImage(true)}>
+                  Remove
+                </button>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -173,6 +200,14 @@ export default function CategoriesPage() {
         onConfirm={() => handleDelete(deleteTarget.id)}
         title="Delete category"
         message={deleteTarget ? `Delete "${deleteTarget.name}"? Products under it will need reassigning.` : ''}
+      />
+
+      <ConfirmDialog
+        open={confirmRemoveImage}
+        onClose={() => setConfirmRemoveImage(false)}
+        onConfirm={handleRemoveImage}
+        title="Remove photo"
+        message="Remove this category's photo? This can't be undone."
       />
     </div>
   )
