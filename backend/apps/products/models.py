@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
 
@@ -33,9 +34,20 @@ class Product(models.Model):
             self.slug = slug
         super().save(*args, **kwargs)
 
-    @property
-    def in_stock(self):
-        return self.is_available and self.stock_quantity > 0
+    def is_in_stock(self, reduce_stock):
+        """
+        Whether the storefront should treat this product as orderable.
+        `reduce_stock` is the site-wide "Settings > Reduce Stock" toggle,
+        passed in rather than looked up here so callers control when that
+        query happens (once per request, not once per product) — see
+        apps.settings.services.get_bool_setting.
+        With the toggle off, stock_quantity is ignored entirely (infinite
+        stock assumed); is_available (the admin's manual per-product switch)
+        always still applies either way.
+        """
+        if not self.is_available:
+            return False
+        return self.stock_quantity > 0 if reduce_stock else True
 
     def __str__(self):
         return self.name
@@ -66,3 +78,18 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.product.name}"
+
+
+class CatalogueFile(models.Model):
+    """
+    The admin's downloadable product catalogue (Excel/CSV) — a plain document
+    shown on the storefront, unrelated to the structured Product rows above.
+    Singleton by convention: uploading a new one replaces whatever is there.
+    """
+    file = models.FileField(upload_to="catalogue/")
+    original_filename = models.CharField(max_length=255)
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.original_filename

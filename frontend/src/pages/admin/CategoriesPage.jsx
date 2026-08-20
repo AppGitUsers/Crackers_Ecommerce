@@ -16,6 +16,7 @@ export default function CategoriesPage() {
   const [imageFile, setImageFile] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [confirmRemoveImage, setConfirmRemoveImage] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   function load() {
     setLoading(true)
@@ -42,19 +43,25 @@ export default function CategoriesPage() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    const fd = new FormData()
-    Object.entries(form).forEach(([k, v]) => fd.append(k, v))
-    if (imageFile) fd.append('image', imageFile)
+    if (saving) return
+    setSaving(true)
+    try {
+      const fd = new FormData()
+      Object.entries(form).forEach(([k, v]) => fd.append(k, v))
+      if (imageFile) fd.append('image', imageFile)
 
-    if (editing) {
-      await CategoriesAdminAPI.update(editing.id, fd)
-      toast.success('Category updated.')
-    } else {
-      await CategoriesAdminAPI.create(fd)
-      toast.success('Category created.')
+      if (editing) {
+        await CategoriesAdminAPI.update(editing.id, fd)
+        toast.success('Category updated.')
+      } else {
+        await CategoriesAdminAPI.create(fd)
+        toast.success('Category created.')
+      }
+      setShowForm(false)
+      load()
+    } finally {
+      setSaving(false)
     }
-    setShowForm(false)
-    load()
   }
 
   async function handleDelete(id) {
@@ -147,7 +154,7 @@ export default function CategoriesPage() {
         footer={
           <>
             <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
-            <button type="submit" form="category-form" className="btn-primary">Save</button>
+            <button type="submit" form="category-form" className="btn-primary" disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
           </>
         }
       >

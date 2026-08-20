@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Gift, ArrowLeft } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
@@ -11,6 +11,10 @@ export default function CheckoutPage() {
   const [form, setForm] = useState({ name: '', phone: '', address: '', city: '', pincode: '' })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  // Synchronous lock, checked before the `submitting` state (and its re-render)
+  // has landed — belt-and-suspenders against a fast double-click/tap placing
+  // two orders, since this button creates a real order.
+  const submittingRef = useRef(false)
 
   const [offers, setOffers] = useState([])
   const [products, setProducts] = useState([])
@@ -31,13 +35,14 @@ export default function CheckoutPage() {
       .reduce((sum, o) => sum + Number(o.amount_discount.discount_value), 0)
   }, [offers, subtotal])
 
-  // flat_discount offers actually reduce what's charged — CartPage already
-  // promises "₹X OFF will be applied at checkout" for these, so the total
-  // shown here has to reflect it too, not just the free-products picker.
+  // flat_discount / percentage_discount offers actually reduce what's charged
+  // — CartPage already promises "X OFF will be applied at checkout" for
+  // these, so the total shown here has to reflect it too, not just the
+  // free-products picker.
   const flatDiscount = useMemo(() => {
     const unlocked = getUnlockedOffers(items, offers, products)
     return unlocked
-      .filter((u) => u.type === 'flat_discount')
+      .filter((u) => u.type === 'flat_discount' || u.type === 'percentage_discount')
       .reduce((sum, u) => sum + u.value, 0)
   }, [items, offers, products])
 
@@ -76,11 +81,13 @@ export default function CheckoutPage() {
 
   async function handleSubmit(e) {
     e.preventDefault()
+    if (submittingRef.current) return
     setError('')
     if (!form.name.trim() || !form.phone.trim()) {
       setError('Name and phone number are required.')
       return
     }
+    submittingRef.current = true
     setSubmitting(true)
     try {
       const payload = {
@@ -96,6 +103,7 @@ export default function CheckoutPage() {
       navigate(`/order-success/${data.order_number}`, { state: { order: data } })
     } catch (err) {
       setError(err.response?.data?.detail || 'Something went wrong placing your order. Please try again.')
+      submittingRef.current = false
     } finally {
       setSubmitting(false)
     }

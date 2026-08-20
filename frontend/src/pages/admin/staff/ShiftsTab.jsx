@@ -20,6 +20,7 @@ export default function ShiftsTab() {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [saving, setSaving] = useState(false)
 
   function load() {
     setLoading(true)
@@ -46,15 +47,21 @@ export default function ShiftsTab() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (editing) {
-      await StaffAPI.shifts.update(editing.id, form)
-      toast.success('Shift updated.')
-    } else {
-      await StaffAPI.shifts.create(form)
-      toast.success('Shift created.')
+    if (saving) return
+    setSaving(true)
+    try {
+      if (editing) {
+        await StaffAPI.shifts.update(editing.id, form)
+        toast.success('Shift updated.')
+      } else {
+        await StaffAPI.shifts.create(form)
+        toast.success('Shift created.')
+      }
+      setShowForm(false)
+      load()
+    } finally {
+      setSaving(false)
     }
-    setShowForm(false)
-    load()
   }
 
   async function handleDelete(id) {
@@ -143,7 +150,7 @@ export default function ShiftsTab() {
         footer={
           <>
             <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
-            <button type="submit" form="shift-form" className="btn-primary">Save</button>
+            <button type="submit" form="shift-form" className="btn-primary" disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
           </>
         }
       >

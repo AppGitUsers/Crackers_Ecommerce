@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { ImageOff } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 
@@ -6,11 +7,31 @@ export default function ProductCard({ product, priority = false }) {
   const cartLine = items.find((i) => i.product_id === product.id)
 
   const inCartQty = cartLine?.quantity || 0
-  const [intPart, decPart] = Number(product.price).toFixed(2).split('.')
+  const hasDiscount = product.discounted_price != null && Number(product.discounted_price) < Number(product.price)
+  const displayPrice = hasDiscount ? Number(product.discounted_price) : Number(product.price)
+  const [intPart, decPart] = displayPrice.toFixed(2).split('.')
+  const pctOff = hasDiscount ? Math.round((1 - Number(product.discounted_price) / Number(product.price)) * 100) : 0
+
+  // A fast double-tap on touch devices can fire two click events before
+  // React re-renders the button into the quantity stepper — this ref-based
+  // lock (checked synchronously, unlike state) blocks the second one from
+  // adding an unintended extra unit.
+  const addLockRef = useRef(false)
+  function handleAdd() {
+    if (addLockRef.current) return
+    addLockRef.current = true
+    addItem(product, 1)
+    setTimeout(() => { addLockRef.current = false }, 400)
+  }
 
   return (
     <div className="group card p-4 flex flex-col transition-all duration-300 hover:shadow-elevated hover:-translate-y-0.5">
-      <div className="aspect-square rounded-lg overflow-hidden mb-3 flex items-center justify-center ring-1 ring-black/5 bg-gradient-to-br from-sandal-50 to-sandal-100">
+      <div className="relative aspect-square rounded-lg overflow-hidden mb-3 flex items-center justify-center ring-1 ring-black/5 bg-gradient-to-br from-sandal-50 to-sandal-100">
+        {hasDiscount && (
+          <span className="absolute top-1.5 left-1.5 z-10 bg-brand-600 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-full shadow-sm">
+            {pctOff}% OFF
+          </span>
+        )}
         {product.primary_image ? (
           <img
             src={product.primary_image}
@@ -26,6 +47,9 @@ export default function ProductCard({ product, priority = false }) {
       <h3 className="font-semibold text-ink-900 leading-snug">{product.name}</h3>
       <p className="text-xs text-ink-500 mb-1">{product.category_name}</p>
       <div className="mt-auto pt-2">
+        {hasDiscount && (
+          <span className="text-xs text-ink-400 line-through block leading-none mb-0.5">₹{Number(product.price).toFixed(2)}</span>
+        )}
         <span className="font-extrabold text-brand-600 text-lg">
           ₹{intPart}<span className="text-xs font-bold align-top">.{decPart}</span>
         </span>
@@ -59,7 +83,7 @@ export default function ProductCard({ product, priority = false }) {
       ) : (
         <button
           className="group relative mt-3 h-12 w-full active:scale-95 transition-transform"
-          onClick={() => addItem(product, 1)}
+          onClick={handleAdd}
         >
           {/* The whole wave-topped shelf is the button, not just an icon on it */}
           <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 48" preserveAspectRatio="none" aria-hidden="true">

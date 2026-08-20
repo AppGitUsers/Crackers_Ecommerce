@@ -11,6 +11,7 @@ const OFFER_TYPE_OPTIONS = [
 const DISCOUNT_TYPE_OPTIONS = [
   { value: 'flat_discount', label: 'Flat Rupee Discount' },
   { value: 'free_products_worth', label: 'Free Products Worth ₹' },
+  { value: 'percentage_discount', label: 'Percentage Discount (no minimum)' },
 ]
 
 const EMPTY_OFFER = {
@@ -71,6 +72,9 @@ export default function OffersPage() {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY_OFFER)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [uploadingBanner, setUploadingBanner] = useState(false)
+  const [togglingIds, setTogglingIds] = useState(new Set())
   const [confirmRemoveImage, setConfirmRemoveImage] = useState(false)
   // Collapsed by default — "buy X get Y" almost always means Y of the same
   // product you bought, which is already the backend's default when
@@ -136,34 +140,50 @@ export default function OffersPage() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    const payload = {
-      name: form.name, offer_type: form.offer_type, description: form.description,
-      is_active: form.is_active, priority: form.priority,
-    }
-    if (form.offer_type === 'buy_x_get_y') payload.buy_x_get_y = form.buy_x_get_y
-    if (form.offer_type === 'amount_discount') payload.amount_discount = form.amount_discount
+    if (saving) return
+    setSaving(true)
+    try {
+      const payload = {
+        name: form.name, offer_type: form.offer_type, description: form.description,
+        is_active: form.is_active, priority: form.priority,
+      }
+      if (form.offer_type === 'buy_x_get_y') payload.buy_x_get_y = form.buy_x_get_y
+      if (form.offer_type === 'amount_discount') {
+        payload.amount_discount = form.amount_discount.discount_type === 'percentage_discount'
+          ? { ...form.amount_discount, min_purchase_amount: 0 }
+          : form.amount_discount
+      }
 
-    if (editing) {
-      await OffersAPI.update(editing.id, payload)
-      toast.success('Offer updated.')
-      load()
-    } else {
-      const { data } = await OffersAPI.create(payload)
-      toast.success('Offer created — add a banner image to finish.')
-      load()
-      setEditing(data)
-      return // keep the form open so a banner image can be attached
+      if (editing) {
+        await OffersAPI.update(editing.id, payload)
+        toast.success('Offer updated.')
+        load()
+      } else {
+        const { data } = await OffersAPI.create(payload)
+        toast.success('Offer created — add a banner image to finish.')
+        load()
+        setEditing(data)
+        return // keep the form open so a banner image can be attached
+      }
+      setShowForm(false)
+    } finally {
+      setSaving(false)
     }
-    setShowForm(false)
   }
 
   async function handleImageUpload(e) {
-    if (!editing) return
+    if (!editing || uploadingBanner) return
     const file = e.target.files[0]
+    e.target.value = ''
     if (!file) return
-    await OffersAPI.uploadBannerImage(editing.id, file)
-    toast.success('Banner image uploaded.')
-    refreshEditing(editing.id)
+    setUploadingBanner(true)
+    try {
+      await OffersAPI.uploadBannerImage(editing.id, file)
+      toast.success('Banner image uploaded.')
+      await refreshEditing(editing.id)
+    } finally {
+      setUploadingBanner(false)
+    }
   }
 
   async function handleRemoveImage() {
@@ -174,8 +194,18 @@ export default function OffersPage() {
   }
 
   async function toggleActive(offer, nextValue) {
-    await OffersAPI.update(offer.id, { is_active: nextValue })
-    load()
+    if (togglingIds.has(offer.id)) return
+    setTogglingIds((prev) => new Set(prev).add(offer.id))
+    try {
+      await OffersAPI.update(offer.id, { is_active: nextValue })
+      load()
+    } finally {
+      setTogglingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(offer.id)
+        return next
+      })
+    }
   }
 
   async function handleDelete(id) {
@@ -215,7 +245,7 @@ export default function OffersPage() {
                     <span className={`badge ${offer.is_active ? 'badge-green' : 'badge-ink'}`}>
                       {offer.is_active ? 'Active' : 'Inactive'}
                     </span>
-                    <Toggle checked={offer.is_active} onChange={(next) => toggleActive(offer, next)} label="Offer active" />
+                    <Toggle checked={offer.is_active} disabled={togglingIds.has(offer.id)} onChange={(next) => toggleActive(offer, next)} label="Offer active" />
                   </div>
                 </div>
                 {offer.offer_type === 'buy_x_get_y' && offer.buy_x_get_y && (
@@ -234,10 +264,19 @@ export default function OffersPage() {
                   </>
                 )}
                 {offer.offer_type === 'amount_discount' && offer.amount_discount && (
-                  <p className="text-sm text-ink-600 mt-2">
-                    Spend ₹{offer.amount_discount.min_purchase_amount} → ₹{offer.amount_discount.discount_value}{' '}
-                    {offer.amount_discount.discount_type === 'flat_discount' ? 'off' : 'worth free'}
-                  </p>
+                  offer.amount_discount.discount_type === 'percentage_discount' ? (
+                    <p className="text-sm text-ink-600 mt-2">
+                      {offer.amount_discount.discount_value}% off{' '}
+                      {offer.amount_discount.applicable_products.length > 0
+                        ? productNames(offer.amount_discount.applicable_products, products).join(', ')
+                        : 'all products'}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-ink-600 mt-2">
+                      Spend ₹{offer.amount_discount.min_purchase_amount} → ₹{offer.amount_discount.discount_value}{' '}
+                      {offer.amount_discount.discount_type === 'flat_discount' ? 'off' : 'worth free'}
+                    </p>
+                  )
                 )}
                 <div className="flex gap-3 mt-3">
                   <button className="text-brand-600 hover:text-brand-700 text-sm font-semibold" onClick={() => openEdit(offer)}>Edit</button>
@@ -256,7 +295,7 @@ export default function OffersPage() {
         footer={
           <>
             <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Close</button>
-            <button type="submit" form="offer-form" className="btn-primary">Save Offer</button>
+            <button type="submit" form="offer-form" className="btn-primary" disabled={saving}>{saving ? 'Saving…' : 'Save Offer'}</button>
           </>
         }
       >
@@ -325,11 +364,6 @@ export default function OffersPage() {
           {form.offer_type === 'amount_discount' && (
             <div className="border border-sandal-200 rounded-lg p-3 space-y-2">
               <div>
-                <label className="label">Minimum Purchase (₹)</label>
-                <input type="number" className="input" value={form.amount_discount.min_purchase_amount}
-                  onChange={(e) => setForm({ ...form, amount_discount: { ...form.amount_discount, min_purchase_amount: e.target.value } })} />
-              </div>
-              <div>
                 <label className="label">Discount Type</label>
                 <Select
                   value={form.amount_discount.discount_type}
@@ -337,13 +371,35 @@ export default function OffersPage() {
                   options={DISCOUNT_TYPE_OPTIONS}
                 />
               </div>
+              {form.amount_discount.discount_type === 'percentage_discount' ? (
+                <p className="text-xs text-ink-400">
+                  No minimum purchase — this discount is always applied whenever a matching product is in the cart.
+                </p>
+              ) : (
+                <div>
+                  <label className="label">Minimum Purchase (₹)</label>
+                  <input type="number" className="input" value={form.amount_discount.min_purchase_amount}
+                    onChange={(e) => setForm({ ...form, amount_discount: { ...form.amount_discount, min_purchase_amount: e.target.value } })} />
+                </div>
+              )}
               <div>
-                <label className="label">Value (₹)</label>
-                <input type="number" className="input" value={form.amount_discount.discount_value}
-                  onChange={(e) => setForm({ ...form, amount_discount: { ...form.amount_discount, discount_value: e.target.value } })} />
+                <label className="label">{form.amount_discount.discount_type === 'percentage_discount' ? 'Discount Percentage (%)' : 'Value (₹)'}</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={form.amount_discount.discount_type === 'percentage_discount' ? 100 : undefined}
+                  step={form.amount_discount.discount_type === 'percentage_discount' ? 0.01 : 1}
+                  className="input"
+                  value={form.amount_discount.discount_value}
+                  onChange={(e) => setForm({ ...form, amount_discount: { ...form.amount_discount, discount_value: e.target.value } })}
+                />
               </div>
               <ProductMultiSelect
-                label="Applicable Products (empty = whole cart)"
+                label={
+                  form.amount_discount.discount_type === 'percentage_discount'
+                    ? 'Products This Applies To (empty = all products)'
+                    : 'Applicable Products (empty = whole cart)'
+                }
                 products={products}
                 selectedIds={form.amount_discount.applicable_products}
                 onChange={(val) => setForm({ ...form, amount_discount: { ...form.amount_discount, applicable_products: val } })}

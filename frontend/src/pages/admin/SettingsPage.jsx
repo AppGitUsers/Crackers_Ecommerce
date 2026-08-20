@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Plus, Trash2, Save, CheckCircle2 } from 'lucide-react'
-import { SettingsAPI } from '../../api/endpoints'
-import { ConfirmDialog, PageLoader, Empty } from '../../components/admin/ui.jsx'
+import { Plus, Trash2, Save, CheckCircle2, FileSpreadsheet, Download, PackageSearch } from 'lucide-react'
+import { SettingsAPI, CatalogueAPI } from '../../api/endpoints'
+import { ConfirmDialog, PageLoader, Empty, FileInput, Toggle } from '../../components/admin/ui.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
+
+const CATALOGUE_ALLOWED_EXTENSIONS = ['xlsx', 'xls', 'csv']
+// Rendered as its own dedicated Toggle card below, not as a raw text row in
+// the generic key/value list — a free-text input is too easy to fat-finger
+// into something that doesn't parse as a boolean.
+const REDUCE_STOCK_KEY = 'reduce_stock'
 
 function humanizeKey(key) {
   return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
@@ -17,8 +23,19 @@ export default function SettingsPage() {
   const [justSaved, setJustSaved] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [addingNew, setAddingNew] = useState(false)
+  const [addingSaving, setAddingSaving] = useState(false)
   const [newKey, setNewKey] = useState('')
   const [newValue, setNewValue] = useState('')
+
+  const [catalogueFile, setCatalogueFile] = useState(null)
+  const [catalogueLoading, setCatalogueLoading] = useState(true)
+  const [catalogueUploading, setCatalogueUploading] = useState(false)
+  const [catalogueRemoveConfirm, setCatalogueRemoveConfirm] = useState(false)
+
+  const [reduceStockToggling, setReduceStockToggling] = useState(false)
+  const visibleSettings = settings.filter((s) => s.key !== REDUCE_STOCK_KEY)
+  const reduceStockSetting = settings.find((s) => s.key === REDUCE_STOCK_KEY)
+  const reduceStockOn = reduceStockSetting?.value?.trim().toLowerCase() === 'true'
 
   function load() {
     setLoading(true)
@@ -31,7 +48,39 @@ export default function SettingsPage() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [])
+  function loadCatalogue() {
+    setCatalogueLoading(true)
+    CatalogueAPI.get()
+      .then(({ data }) => setCatalogueFile(data))
+      .finally(() => setCatalogueLoading(false))
+  }
+
+  useEffect(() => { load(); loadCatalogue() }, [])
+
+  function handleCatalogueFileChange(e) {
+    if (catalogueUploading) return
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    const ext = file.name.split('.').pop()?.toLowerCase()
+    if (!CATALOGUE_ALLOWED_EXTENSIONS.includes(ext)) {
+      toast.error('Only Excel (.xlsx, .xls) or CSV files are allowed.')
+      return
+    }
+    setCatalogueUploading(true)
+    CatalogueAPI.upload(file)
+      .then(({ data }) => {
+        setCatalogueFile(data)
+        toast.success('Catalogue uploaded.')
+      })
+      .finally(() => setCatalogueUploading(false))
+  }
+
+  async function handleCatalogueRemove() {
+    await CatalogueAPI.remove()
+    setCatalogueFile(null)
+    toast.success('Catalogue removed.')
+  }
 
   async function handleSaveAll(e) {
     e.preventDefault()
@@ -49,18 +98,40 @@ export default function SettingsPage() {
 
   async function handleAddNew(e) {
     e.preventDefault()
-    await SettingsAPI.create({ key: newKey.trim(), value: newValue })
-    toast.success('Setting added.')
-    setNewKey('')
-    setNewValue('')
-    setAddingNew(false)
-    load()
+    if (addingSaving) return
+    setAddingSaving(true)
+    try {
+      await SettingsAPI.create({ key: newKey.trim(), value: newValue })
+      toast.success('Setting added.')
+      setNewKey('')
+      setNewValue('')
+      setAddingNew(false)
+      load()
+    } finally {
+      setAddingSaving(false)
+    }
   }
 
   async function handleDelete(id) {
     await SettingsAPI.remove(id)
     toast.success('Setting deleted.')
     load()
+  }
+
+  async function handleToggleReduceStock(next) {
+    if (reduceStockToggling) return
+    setReduceStockToggling(true)
+    try {
+      if (reduceStockSetting) {
+        await SettingsAPI.update(reduceStockSetting.id, { value: next ? 'True' : 'False' })
+      } else {
+        await SettingsAPI.create({ key: REDUCE_STOCK_KEY, value: next ? 'True' : 'False' })
+      }
+      toast.success(next ? 'Stock will now be reduced per order.' : 'Stock will no longer be reduced — treated as unlimited.')
+      load()
+    } finally {
+      setReduceStockToggling(false)
+    }
   }
 
   if (loading) return <PageLoader />
@@ -74,11 +145,34 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {settings.length === 0 ? (
+      <div className="card p-5 mb-4">
+        <div className="flex items-center gap-2 mb-1">
+          <PackageSearch size={18} className="text-brand-600" />
+          <h2 className="font-bold text-ink-900">Stock Management</h2>
+        </div>
+        <div className="flex items-center justify-between gap-3 mt-3">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-ink-900">Reduce stock on order</p>
+            <p className="text-xs text-ink-500 mt-0.5">
+              {reduceStockOn
+                ? 'On — placing an order reduces each product\'s stock count, and it goes unavailable at 0.'
+                : 'Off — stock counts are ignored everywhere; every available product is treated as always in stock.'}
+            </p>
+          </div>
+          <Toggle
+            checked={reduceStockOn}
+            disabled={reduceStockToggling}
+            onChange={handleToggleReduceStock}
+            label="Reduce stock on order"
+          />
+        </div>
+      </div>
+
+      {visibleSettings.length === 0 ? (
         <Empty message="No settings yet — add your first one below." />
       ) : (
         <form onSubmit={handleSaveAll} className="card p-5 space-y-4">
-          {settings.map((s) => (
+          {visibleSettings.map((s) => (
             <div key={s.id} className="flex items-end gap-2">
               <div className="flex-1 min-w-0">
                 <label className="label">{humanizeKey(s.key)}</label>
@@ -132,7 +226,7 @@ export default function SettingsPage() {
               <label className="label">Value</label>
               <input className="input" value={newValue} onChange={(e) => setNewValue(e.target.value)} />
             </div>
-            <button type="submit" className="btn-primary">Add</button>
+            <button type="submit" className="btn-primary" disabled={addingSaving}>{addingSaving ? 'Adding…' : 'Add'}</button>
             <button type="button" className="btn-secondary" onClick={() => setAddingNew(false)}>Cancel</button>
           </form>
         ) : (
@@ -149,6 +243,58 @@ export default function SettingsPage() {
         onConfirm={() => handleDelete(deleteTarget.id)}
         title="Delete setting"
         message={deleteTarget ? `Delete "${deleteTarget.key}"? Anything that reads this key (e.g. the invoice) will fall back to blank.` : ''}
+      />
+
+      <div className="card p-5 mt-4">
+        <div className="flex items-center gap-2 mb-1">
+          <FileSpreadsheet size={18} className="text-brand-600" />
+          <h2 className="font-bold text-ink-900">Product Catalogue</h2>
+        </div>
+        <p className="text-sm text-ink-500 mb-4">
+          Upload an Excel or CSV price list — customers can download it from the storefront's Products page.
+        </p>
+
+        {catalogueLoading ? (
+          <PageLoader />
+        ) : catalogueFile ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-ink-900 truncate">{catalogueFile.original_filename}</p>
+              <p className="text-xs text-ink-400">
+                Uploaded {new Date(catalogueFile.uploaded_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                {catalogueFile.uploaded_by_username ? ` by ${catalogueFile.uploaded_by_username}` : ''}
+              </p>
+            </div>
+            <a href={catalogueFile.download_url} className="btn-secondary btn-sm" target="_blank" rel="noopener noreferrer">
+              <Download size={14} />
+              Download
+            </a>
+            <FileInput
+              onChange={handleCatalogueFileChange}
+              accept=".xlsx,.xls,.csv"
+              label={catalogueUploading ? 'Uploading…' : 'Replace'}
+              disabled={catalogueUploading}
+            />
+            <button type="button" className="btn-ghost text-brand-600 hover:bg-brand-50" disabled={catalogueUploading} onClick={() => setCatalogueRemoveConfirm(true)}>
+              <Trash2 size={16} />
+            </button>
+          </div>
+        ) : (
+          <FileInput
+            onChange={handleCatalogueFileChange}
+            accept=".xlsx,.xls,.csv"
+            label={catalogueUploading ? 'Uploading…' : 'Upload Catalogue'}
+            disabled={catalogueUploading}
+          />
+        )}
+      </div>
+
+      <ConfirmDialog
+        open={catalogueRemoveConfirm}
+        onClose={() => setCatalogueRemoveConfirm(false)}
+        onConfirm={handleCatalogueRemove}
+        title="Remove catalogue"
+        message="Remove the downloadable catalogue? The download button will disappear from the storefront until a new file is uploaded."
       />
     </div>
   )

@@ -16,6 +16,9 @@ export default function ProductsPage() {
   const [form, setForm] = useState(EMPTY_FORM)
   const [categoryFilter, setCategoryFilter] = useState('')
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [togglingIds, setTogglingIds] = useState(new Set())
   const [confirmRemoveImage, setConfirmRemoveImage] = useState(false)
 
   function load() {
@@ -48,18 +51,24 @@ export default function ProductsPage() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    const fd = new FormData()
-    Object.entries(form).forEach(([k, v]) => fd.append(k, v))
+    if (saving) return
+    setSaving(true)
+    try {
+      const fd = new FormData()
+      Object.entries(form).forEach(([k, v]) => fd.append(k, v))
 
-    if (editing) {
-      await ProductsAPI.update(editing.id, fd)
-      toast.success('Product updated.')
-    } else {
-      await ProductsAPI.create(fd)
-      toast.success('Product created.')
+      if (editing) {
+        await ProductsAPI.update(editing.id, fd)
+        toast.success('Product updated.')
+      } else {
+        await ProductsAPI.create(fd)
+        toast.success('Product created.')
+      }
+      setShowForm(false)
+      load()
+    } finally {
+      setSaving(false)
     }
-    setShowForm(false)
-    load()
   }
 
   async function handleDelete(id) {
@@ -69,12 +78,18 @@ export default function ProductsPage() {
   }
 
   async function handleImageUpload(e) {
-    if (!editing) return
+    if (!editing || uploadingImage) return
     const file = e.target.files[0]
+    e.target.value = ''
     if (!file) return
-    await ProductsAPI.uploadImage(editing.id, file)
-    const { data } = await ProductsAPI.detail(editing.id)
-    setEditing(data)
+    setUploadingImage(true)
+    try {
+      await ProductsAPI.uploadImage(editing.id, file)
+      const { data } = await ProductsAPI.detail(editing.id)
+      setEditing(data)
+    } finally {
+      setUploadingImage(false)
+    }
     load()
   }
 
@@ -87,10 +102,20 @@ export default function ProductsPage() {
   }
 
   async function toggleAvailability(product, nextValue) {
-    const fd = new FormData()
-    fd.append('is_available', nextValue)
-    await ProductsAPI.update(product.id, fd)
-    load()
+    if (togglingIds.has(product.id)) return
+    setTogglingIds((prev) => new Set(prev).add(product.id))
+    try {
+      const fd = new FormData()
+      fd.append('is_available', nextValue)
+      await ProductsAPI.update(product.id, fd)
+      load()
+    } finally {
+      setTogglingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(product.id)
+        return next
+      })
+    }
   }
 
   return (
@@ -135,7 +160,7 @@ export default function ProductsPage() {
                 </div>
                 <div className="flex items-center justify-between mt-3">
                   <div className="flex items-center gap-2">
-                    <Toggle checked={p.is_available} onChange={(next) => toggleAvailability(p, next)} label="Available for sale" />
+                    <Toggle checked={p.is_available} disabled={togglingIds.has(p.id)} onChange={(next) => toggleAvailability(p, next)} label="Available for sale" />
                     <span className="text-xs font-semibold text-ink-500">{p.is_available ? 'Available' : 'Hidden'}</span>
                   </div>
                   <div className="space-x-3">
@@ -176,7 +201,7 @@ export default function ProductsPage() {
                     <td>{p.stock_quantity}</td>
                     <td>
                       <div className="flex items-center gap-2">
-                        <Toggle checked={p.is_available} onChange={(next) => toggleAvailability(p, next)} label="Available for sale" />
+                        <Toggle checked={p.is_available} disabled={togglingIds.has(p.id)} onChange={(next) => toggleAvailability(p, next)} label="Available for sale" />
                         <span className="text-xs font-semibold text-ink-500">{p.is_available ? 'Available' : 'Hidden'}</span>
                       </div>
                     </td>
@@ -199,7 +224,7 @@ export default function ProductsPage() {
         footer={
           <>
             <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Close</button>
-            <button type="submit" form="product-form" className="btn-primary">Save</button>
+            <button type="submit" form="product-form" className="btn-primary" disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
           </>
         }
       >
